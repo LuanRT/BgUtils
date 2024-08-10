@@ -1,0 +1,31 @@
+{
+  "type": "module",
+  "name": "pogen",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist/index.cjs",
+  "module": "dist/index.esm.js",
+  "author": "LuanRT <luan.lrt4@gmail.com> (https://github.com/LuanRT)",
+  "types": "./dist/index.d.mts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "clean": "npx rimraf ./dist",
+    "build": "npm run clean && esbuild src/index.mjs --bundle --minify --outfile=dist/index.esm.js --format=esm && esbuild src/index.mjs --bundle --minify --outfile=dist/index.cjs --format=cjs && tsc"
+  },
+  "keywords": [],
+  "license": "MIT",
+  "devDependencies": {
+    "esbuild": "^0.14.0",
+    "typescript": "^4.4.4"
+  },
+  "dependencies": {
+    "jsdom": "^24.1.1"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/index.esm.js",
+      "require": "./dist/index.cjs",
+      "types": "./dist/index.d.mts"
+    }
+  }
+}

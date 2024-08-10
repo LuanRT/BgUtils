@@ -1,0 +1,19 @@
+{
+  "name": "web",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "typescript": "^4.6.4",
+    "vite": "^3.0.0"
+  },
+  "dependencies": {
+    "shaka-player": "^4.3.8",
+    "youtubei.js": "github:LuanRT/YouTube.js#do-not-merge/ump-debugging"
+  }
+}
