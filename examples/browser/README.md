@@ -1,4 +1,6 @@
-To build the web app, run the following commands:
+**NOTE**: Build the library before running the examples.
+
+Web application:
 
 ```shell
 cd examples/browser/web

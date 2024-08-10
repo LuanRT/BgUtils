@@ -1,3 +1,7 @@
+**NOTE**: Build the library before running the examples.
+
 ```shell
-node examples/node/main.mjs
+cd examples/node
+npm install
+node main.mjs
 ```

@@ -1,5 +1,5 @@
 import { JSDOM } from 'jsdom';
-import { Innertube, Proto, Utils } from 'youtubei.js';
+import { Innertube, UniversalCache, Proto, Utils } from 'youtubei.js';
 import { PoToken, Challenge } from '../../src/core/index.mjs';
 
 const bgClientId = 'O43z0dpjhgX20SCx4KAo';
@@ -35,10 +35,14 @@ if (challenge) {
   console.log("Fetching audio streaming URL...");
   console.log('\n');
 
-  const yt = await Innertube.create({ po_token: poToken,  visitor_data: visitorData });
+  const yt = await Innertube.create({
+    po_token: poToken,
+    visitor_data: visitorData,
+    cache: new UniversalCache(),
+  });
 
   const info = await yt.getBasicInfo('5tv1sn-TAWM');
   const audioStreamingURL = info.chooseFormat({ quality: 'best', type: 'audio' }).decipher(yt.session.player);
-  
+
   console.info("Streaming URL:", audioStreamingURL);
 }
