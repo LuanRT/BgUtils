@@ -48,28 +48,6 @@ const fetchFn = async (input: RequestInfo | URL, init?: RequestInit) => {
   });
 }
 
-const bgClientId = 'O43z0dpjhgX20SCx4KAo';
-const visitorData = Proto.encodeVisitorData(Utils.generateRandomString(11), Math.floor(Date.now() / 1000));
-
-const bgConfig = {
-  fetch: fetchFn,
-  clientId: bgClientId,
-  globalObj: window,
-  visitorData,
-};
-
-const challenge = await BG.Challenge.get(bgConfig);
-
-const script = challenge.script.find((sc) => !!sc);
-if (script)
-  new Function(script)();
-
-const poToken = await BG.PoToken.create({
-  program: challenge.challenge,
-  vmName: challenge.vmName,
-  bgConfig
-});
-
 const title = document.getElementById('title') as HTMLHeadingElement;
 const description = document.getElementById('description') as HTMLDivElement;
 const metadata = document.getElementById('metadata') as HTMLDivElement;
@@ -77,8 +55,30 @@ const loader = document.getElementById('loader') as HTMLDivElement;
 const form = document.querySelector('form') as HTMLFormElement;
 
 async function main() {
+  // const bgClientId = 'O43z0dpjhgX20SCx4KAo';
+  const visitorData = Proto.encodeVisitorData(Utils.generateRandomString(11), Math.floor(Date.now() / 1000));
+
+  // const bgConfig = {
+  //   fetch: fetchFn,
+  //   clientId: bgClientId,
+  //   globalObj: window,
+  //   visitorData,
+  // };
+
+  // const challenge = await BG.Challenge.get(bgConfig);
+
+  // const script = challenge.script.find((sc) => !!sc);
+  // if (script)
+  //   new Function(script)();
+
+  // const poToken = await BG.PoToken.create({
+  //   program: challenge.challenge,
+  //   vmName: challenge.vmName,
+  //   bgConfig
+  // });
+
   const yt = await Innertube.create({
-    po_token: poToken,
+    po_token: BG.SessionToken.create(visitorData),
     visitor_data: visitorData,
     fetch: fetchFn ,
     generate_session_locally: true,

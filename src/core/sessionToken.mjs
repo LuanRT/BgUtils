@@ -6,5 +6,5 @@ import { Qe, j } from '../utils/index.mjs';
  * @returns {string}
  */
 export function create(input) {
-  return Qe(j(new TextEncoder().encode(input)), 2);
+  return Qe(j(() => new TextEncoder().encode(input)), 2);
 }
