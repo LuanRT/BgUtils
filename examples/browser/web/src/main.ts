@@ -6,19 +6,59 @@ import shaka from 'shaka-player/dist/shaka-player.ui.js';
 
 import 'shaka-player/dist/controls.css';
 
+const fetchFn = async (input: RequestInfo | URL, init?: RequestInit) => {
+  const url = typeof input === 'string'
+    ? new URL(input)
+    : input instanceof URL
+      ? input
+      : new URL(input.url);
+
+  // Transform the url for use with our proxy.
+  url.searchParams.set('__host', url.host);
+  url.host = 'localhost:8080';
+  url.protocol = 'http';
+
+  const headers = init?.headers
+    ? new Headers(init.headers)
+    : input instanceof Request
+      ? input.headers
+      : new Headers();
+
+  // Now serialize the headers.
+  url.searchParams.set('__headers', JSON.stringify([...headers]));
+
+  if (input instanceof Request) {
+    // @ts-expect-error - x
+    input.duplex = 'half';
+  }
+
+  // Copy over the request.
+  const request = new Request(
+    url,
+    input instanceof Request ? input : undefined
+  );
+
+  headers.delete('user-agent');
+
+  return fetch(request, init ? {
+    ...init,
+    headers
+  } : {
+    headers
+  });
+}
+
 const bgClientId = 'O43z0dpjhgX20SCx4KAo';
 const visitorData = Proto.encodeVisitorData(Utils.generateRandomString(11), Math.floor(Date.now() / 1000));
 
-const bg_config = {
-  fetch: async (input: RequestInfo | URL, init?: RequestInit) => {
-    return fetch(input, init);
-  },
+const bgConfig = {
+  fetch: fetchFn,
   clientId: bgClientId,
   globalObj: window,
   visitorData,
 };
 
-const challenge = await BG.Challenge.get(bg_config);
+const challenge = await BG.Challenge.get(bgConfig);
 
 const script = challenge.script.find((sc) => !!sc);
 if (script)
@@ -27,7 +67,7 @@ if (script)
 const poToken = await BG.PoToken.create({
   program: challenge.challenge,
   vmName: challenge.vmName,
-  bgConfig: bg_config
+  bgConfig
 });
 
 const title = document.getElementById('title') as HTMLHeadingElement;
@@ -40,47 +80,7 @@ async function main() {
   const yt = await Innertube.create({
     po_token: poToken,
     visitor_data: visitorData,
-    fetch: async (input: RequestInfo | URL, init?: RequestInit) => {
-      const url = typeof input === 'string'
-        ? new URL(input)
-        : input instanceof URL
-          ? input
-          : new URL(input.url);
-
-      // Transform the url for use with our proxy.
-      url.searchParams.set('__host', url.host);
-      url.host = 'localhost:8080';
-      url.protocol = 'http';
-
-      const headers = init?.headers
-        ? new Headers(init.headers)
-        : input instanceof Request
-          ? input.headers
-          : new Headers();
-
-      // Now serialize the headers.
-      url.searchParams.set('__headers', JSON.stringify([...headers]));
-
-      if (input instanceof Request) {
-        // @ts-expect-error - x
-        input.duplex = 'half';
-      }
-
-      // Copy over the request.
-      const request = new Request(
-        url,
-        input instanceof Request ? input : undefined
-      );
-
-      headers.delete('user-agent');
-
-      return fetch(request, init ? {
-        ...init,
-        headers
-      } : {
-        headers
-      });
-    },
+    fetch: fetchFn ,
     generate_session_locally: true,
     cache: new UniversalCache(false)
   });

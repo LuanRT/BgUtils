@@ -10,14 +10,14 @@ const dom = new JSDOM();
 globalThis.window = dom.window;
 globalThis.document = dom.window.document;
 
-const bg_config = {
+const bgConfig = {
   fetch: (url, options) => fetch(url, options),
   globalObj: globalThis,
   clientId: bgClientId,
   visitorData,
 };
 
-const challenge = await Challenge.get(bg_config);
+const challenge = await Challenge.get(bgConfig);
 
 if (challenge) {
   new Function(challenge.script.find((sc) => sc !== null))();
@@ -25,7 +25,7 @@ if (challenge) {
   const poToken = await PoToken.create({
     program: challenge.challenge,
     vmName: challenge.vmName,
-    bgConfig: bg_config
+    bgConfig
   });
 
   console.info("PoToken:", poToken);
