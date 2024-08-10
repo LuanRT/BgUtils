@@ -94,7 +94,7 @@ Now we can create the payload for the request we'll be doing next! It should con
   
 ```shell
 curl --request POST \
-  --url 'https://jnn-pa.googleapis.com/$rpc/google.internal.waa.v1.Waa/GenerateIT?%24alt=json&%24outputDefaults=true' \
+  --url 'https://jnn-pa.googleapis.com/$rpc/google.internal.waa.v1.Waa/GenerateIT' \
   --header 'Accept: application/json' \
   --header 'Content-Type: application/json+protobuf' \
   --header 'User-Agent: insomnia/9.3.3' \
