@@ -6,7 +6,7 @@ This library facilitates the generation of PoTokens (Proof of Identity Token) wi
   - [Caveats](#caveats)
   - [Usage](#usage)
   - [Research](#research)
-    - [When to Use the PoToken](#when-to-use-the-potoken)
+    - [When to Use a PoToken](#when-to-use-a-potoken)
     - [Initialization Process](#initialization-process)
     - [Retrieving Integrity Token](#retrieving-integrity-token)
     - [Generating a PoToken](#generating-a-potoken)
@@ -33,7 +33,7 @@ Please refer to the provided examples:
 
 Below is a brief overview of the process to generate a PoToken for those interested in the inner workings of the library and seeking to port it to other languages.
 
-### When to Use the PoToken
+### When to Use a PoToken
 
 YouTube's web player checks the "sps" (`StreamProtectionStatus`) of each media segment request (only if using `UMP` or `SABR`; our browser example uses `UMP`) to determine if the stream needs a PoToken.
 
