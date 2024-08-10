@@ -18,9 +18,6 @@
     "esbuild": "^0.14.0",
     "typescript": "^4.4.4"
   },
-  "dependencies": {
-    "jsdom": "^24.1.1"
-  },
   "exports": {
     ".": {
       "import": "./dist/index.esm.js",

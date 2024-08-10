@@ -10,7 +10,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "jsdom": "^24.1.1",
-    "youtubei.js": "github:LuanRT/YouTube.js#do-not-merge/ump-debugging"
+    "youtubei.js": "github:LuanRT/YouTube.js#do-not-merge/ump-debugging",
+    "jsdom": "^24.1.1"
   }
 }
