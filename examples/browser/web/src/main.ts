@@ -67,20 +67,24 @@ async function main() {
 
   const challenge = await BG.Challenge.get(bgConfig);
 
-  const script = challenge.script.find((sc) => !!sc);
-  if (script)
-    new Function(script)();
+  if (challenge.script) {
+    const script = challenge.script.find((sc) => sc !== null);
+    if (script)
+      new Function(script)();
+  } else {
+    console.warn('Unable to load Botguard.');
+  }
 
   const poToken = await BG.PoToken.create({
     program: challenge.challenge,
-    vmName: challenge.vmName,
+    globalName: challenge.globalName,
     bgConfig
   });
 
   const yt = await Innertube.create({
     po_token: poToken,
     visitor_data: visitorData,
-    fetch: fetchFn ,
+    fetch: fetchFn,
     generate_session_locally: true,
     cache: new UniversalCache(false)
   });

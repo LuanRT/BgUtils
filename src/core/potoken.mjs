@@ -5,22 +5,21 @@ import { Qe, ej, w, Ze, bj, PoTokenError } from '../utils/utils.mjs';
  * @typedef {{
  *  program: string;
  *  bgConfig: import('./index.mjs').BgConfig;
- *  vmName: string;
+ *  globalName: string;
  * }} CreatePoTokenArgs
  */
 
 /**
  * Generates a Proof of Origin token.
- * 
  * @param {CreatePoTokenArgs} args - The arguments for generating the token.
  * @returns {Promise<string>} - A Proof of Origin token.
  * @throws {PoTokenError} If an error occurs during token generation.
  */
 export async function create(args) {
-  const { program, bgConfig, vmName } = args;
+  const { program, bgConfig, globalName } = args;
   const { visitorData } = bgConfig;
 
-  const bg = await initBotguard(bgConfig, program, vmName);
+  const bg = await initBotguard(bgConfig, program, globalName);
 
   if (bg.e4) {
     const X = bg.e4[0];
@@ -55,11 +54,11 @@ export async function create(args) {
  * Initializes the Botguard VM.
  * @param {import('./index.mjs').BgConfig} bgConfig
  * @param {string} program 
- * @param {string} vmName 
+ * @param {string} globalName 
  * @returns {Promise<BotguardResponse>}
  */
-async function initBotguard(bgConfig, program, vmName) {
-  const vm = bgConfig.globalObj[vmName];
+async function initBotguard(bgConfig, program, globalName) {
+  const vm = bgConfig.globalObj[globalName];
   const clientId = bgConfig.clientId;
 
   if (!vm)

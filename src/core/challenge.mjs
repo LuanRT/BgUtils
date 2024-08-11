@@ -39,11 +39,11 @@ export async function get(bgConfig) {
 
 /**
  * @typedef {{
- *  unkVar: string;
- *  unkToken: string;
+ *  script?: (string | null)[];
+ *  scriptId: string;
+ *  globalName: string;
  *  challenge: string;
- *  script: string[];
- *  vmName: string;
+ *  unkVar: string;
  * }} DescrambledChallenge
  */
 
@@ -51,11 +51,11 @@ export async function get(bgConfig) {
  * Descrambles the given scrambled challenge and parses it into an object.
  * @param {string} scrambledChallenge - The scrambled challenge.
  * @returns {DescrambledChallenge} The descrambled challenge:
- *   - unkVar: An unknown variable.
- *   - unkToken: An unknown token.
- *   - challenge: The challenge data.
  *   - script: The script associated with the challenge.
- *   - vmName: The name of the virtual machine in the global scope.
+ *   - scriptId: The id of the script.
+ *   - globalName: The name of the VM in the global scope.
+ *   - challenge: The challenge data.
+ *   - unkVar: An unknown variable.
  */
 export function descramble(scrambledChallenge) {
   let result = null;
@@ -82,13 +82,13 @@ export function descramble(scrambledChallenge) {
     result = JSON.parse(p);
   }
 
-  const [unkVar, script, , unkToken, challenge, vmName ] = result;
+  const [unkVar, script, , scriptId, challenge, globalName ] = result;
 
   return {
-    unkVar,
-    unkToken,
-    challenge,
     script,
-    vmName
+    scriptId,
+    globalName,
+    challenge,
+    unkVar
   }
 }
