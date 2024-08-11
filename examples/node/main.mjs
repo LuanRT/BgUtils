@@ -1,6 +1,6 @@
 import { JSDOM } from 'jsdom';
 import { Innertube, UniversalCache, Proto, Utils } from 'youtubei.js';
-import { PoToken, Challenge } from '../../src/core/index.mjs';
+import { BG } from '../../src/index.mjs';
 
 const bgClientId = 'O43z0dpjhgX20SCx4KAo';
 const visitorData = Proto.encodeVisitorData(Utils.generateRandomString(11), Math.floor(Date.now() / 1000));
@@ -17,12 +17,12 @@ const bgConfig = {
   visitorData,
 };
 
-const challenge = await Challenge.get(bgConfig);
+const challenge = await BG.Challenge.get(bgConfig);
 
 if (challenge) {
   new Function(challenge.script.find((sc) => sc !== null))();
 
-  const poToken = await PoToken.create({
+  const poToken = await BG.PoToken.create({
     program: challenge.challenge,
     vmName: challenge.vmName,
     bgConfig

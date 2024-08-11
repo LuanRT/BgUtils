@@ -10,7 +10,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "clean": "npx rimraf ./dist",
-    "build": "npm run clean && esbuild src/index.mjs --bundle --minify --outfile=dist/index.esm.js --format=esm && esbuild src/index.mjs --bundle --minify --outfile=dist/index.cjs --format=cjs && tsc"
+    "build": "npm run clean && esbuild src/index.mjs --bundle --minify --outfile=dist/index.esm.js --format=esm && esbuild src/index.mjs --bundle --minify --outfile=dist/index.cjs --format=cjs && tsc",
+    "prepare": "npm run build"
   },
   "keywords": [],
   "license": "MIT",
