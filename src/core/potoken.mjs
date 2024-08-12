@@ -143,3 +143,41 @@ async function initialize(bgConfig, program, globalName) {
     postProcessFunctions
   };
 }
+
+/**
+ * Creates a placeholder PoToken. This can be used while `sps` (StreamProtectionStatus) is 2, but will not work once it changes to 3.
+ * @param {string} identity - Visitor data or datasync ID.
+ * @returns {string}
+ */
+export function createPlaceholder(identity) {
+  if (identity.length > 118)
+    throw new BGError(19, "DFO:Invalid");
+
+  const currentTimeInSeconds = Math.floor(Date.now() / 1000);
+  const randomValues = [Math.random() * 255, Math.random() * 255];
+
+  const byteArray = randomValues
+    .concat([0, 3])
+    .concat([
+      (currentTimeInSeconds >> 24) & 255,
+      (currentTimeInSeconds >> 16) & 255,
+      (currentTimeInSeconds >> 8) & 255,
+      currentTimeInSeconds & 255
+    ]);
+
+  const result = new Uint8Array(2 + byteArray.length + identity.length);
+
+  result[0] = 34;
+  result[1] = byteArray.length + identity.length;
+
+  result.set(byteArray, 2);
+  result.set(identity, 2 + byteArray.length);
+
+  const dataArray = result.subarray(2);
+
+  for (let i = randomValues.length; i < dataArray.length; ++i) {
+    dataArray[i] ^= dataArray[i % randomValues.length];
+  }
+
+  return result;
+}
