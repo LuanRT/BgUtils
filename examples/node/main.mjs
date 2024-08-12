@@ -25,7 +25,6 @@ if (challenge.script) {
     new Function(script)();
 } else {
   console.warn('Unable to load Botguard.');
-  return;
 }
 
 const poToken = await BG.PoToken.create({
