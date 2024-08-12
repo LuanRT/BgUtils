@@ -2,7 +2,7 @@ import { JSDOM } from 'jsdom';
 import { Innertube, UniversalCache, Proto, Utils } from 'youtubei.js';
 import { BG } from '../../src/index.mjs';
 
-const bgClientId = 'O43z0dpjhgX20SCx4KAo';
+const requestKey = 'O43z0dpjhgX20SCx4KAo';
 const visitorData = Proto.encodeVisitorData(Utils.generateRandomString(11), Math.floor(Date.now() / 1000));
 
 const dom = new JSDOM();
@@ -13,11 +13,14 @@ globalThis.document = dom.window.document;
 const bgConfig = {
   fetch: (url, options) => fetch(url, options),
   globalObj: globalThis,
-  clientId: bgClientId,
   visitorData,
+  requestKey,
 };
 
 const challenge = await BG.Challenge.get(bgConfig);
+
+if (!challenge)
+  throw new Error('Could not get challenge');
 
 if (challenge.script) {
   const script = challenge.script.find((sc) => sc !== null);

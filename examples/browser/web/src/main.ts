@@ -60,12 +60,15 @@ async function main() {
 
   const bgConfig = {
     fetch: fetchFn,
-    clientId: bgClientId,
+    requestKey: bgClientId,
     globalObj: window,
     visitorData,
   };
 
   const challenge = await BG.Challenge.get(bgConfig);
+
+  if (!challenge)
+    throw new Error('Could not get challenge');
 
   if (challenge.script) {
     const script = challenge.script.find((sc) => sc !== null);

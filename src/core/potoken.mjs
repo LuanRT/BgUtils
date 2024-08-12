@@ -1,5 +1,5 @@
 import { GENERATE_IT_URL, GOOG_API_KEY, USER_AGENT } from '../utils/constants.mjs';
-import { Qe, ej, w, Ze, bj, BGError } from '../utils/utils.mjs';
+import { u8ToBase64, BGError, base64ToU8 } from '../utils/utils.mjs';
 
 /**
  * @typedef {{
@@ -12,31 +12,29 @@ import { Qe, ej, w, Ze, bj, BGError } from '../utils/utils.mjs';
 /**
  * Generates a Proof of Origin token.
  * @param {CreatePoTokenArgs} args - The arguments for generating the token.
- * @returns {Promise<string>} - A Proof of Origin token.
+ * @returns {Promise<string | undefined>} - A Proof of Origin token.
  * @throws {BGError} If an error occurs during token generation.
  */
 export async function create(args) {
   const { program, bgConfig, globalName } = args;
   const { visitorData } = bgConfig;
 
-  const bg = await initBotguard(bgConfig, program, globalName);
+  const bg = await initialize(bgConfig, program, globalName);
 
-  if (bg.e4) {
-    const X = bg.e4[0];
+  if (bg.postProcessFunctions.length) {
+    const processIntegrityToken = bg.postProcessFunctions[0];
 
-    if (!X)
+    if (!processIntegrityToken)
       throw new BGError(4, "PMD:Undefined");
 
-    const V = await X(Ze({ j: bg.integrityToken }));
+    const acquirePo = await processIntegrityToken(base64ToU8(bg.integrityToken));
 
-    if ((typeof V !== "function"))
+    if (typeof acquirePo !== "function")
       throw new BGError(16, "APF:Failed");
 
-    const a = bj(undefined, function () {
-      return V(new TextEncoder().encode(visitorData));
-    }, "C");
+    const buffer = await acquirePo(new TextEncoder().encode(visitorData));
 
-    const poToken = Qe(a, 2);
+    const poToken = u8ToBase64(buffer, true);
 
     if (poToken.length > 80)
       return poToken;
@@ -45,7 +43,7 @@ export async function create(args) {
 
 /**
  * @typedef {{
- *  e4: Function[];
+ *  postProcessFunctions: Function[];
  *  integrityToken: string;
  * }} BotguardResponse
  */
@@ -57,99 +55,91 @@ export async function create(args) {
  * @param {string} globalName 
  * @returns {Promise<BotguardResponse>}
  */
-async function initBotguard(bgConfig, program, globalName) {
+async function initialize(bgConfig, program, globalName) {
   const vm = bgConfig.globalObj[globalName];
-  const clientId = bgConfig.clientId;
+  const requestKey = bgConfig.requestKey;
 
   if (!vm)
-    throw new BGError(1, "VM:Unavailable");
+    throw new BGError(1, "[BG]: VM not found in the global object");
 
-  if (!clientId)
-    throw new BGError(2, "CID:Unavailable");
+  if (!requestKey)
+    throw new BGError(1, "[BG]: Request key not provided");
 
   if (!bgConfig.fetch)
-    throw new BGError(3, "Fetch:Unavailable");
+    throw new BGError(1, "[BG]: Fetch function not provided");
 
-  let C;
-  let BC;
+  /**
+   * @typedef {{
+   *  fn1: Promise<any> | null;
+   *  fn2: Promise<any> | null;
+   *  fn3: Promise<any> | null;
+   *  fn4: Promise<any> | null;
+   * }} AttFunctions
+   */
 
-  let d = {
-    j: 0,
-    Uf: {
-      nG: function (p, q) {
-        // Used for statistics.
-      }
-    }
-  };
+  /** @type {AttFunctions} */
+  let attFunctions = { fn1: null, fn2: null, fn3: null, fn4: null };
 
-  function b(p, q, r, t) {
-    Promise.resolve().then(function () {
-      // Some of these are used to create att tokens for the stats endpoint. Only E7 is used for the potoken.
-      m.resolve({
-        E7: p,
-        Aea: q,
-        cda: r,
-        Xma: t
-      });
-    });
+  function attFunctionsCallback(fn1, fn2, fn3, fn4) {
+    attFunctions.fn1 = fn1;
+    attFunctions.fn2 = fn2;
+    attFunctions.fn3 = fn3;
+    attFunctions.fn4 = fn4;
   }
 
-  function c(p, q, r, t) {
-    var u = "k";
-    q ? u = "h" : r && (u = "u");
-    u !== "k" ? t !== 0 && d.Uf.nG(u, p) : d.j <= 0 ? (d.Uf.nG(u, p),
-      d.j = Math.floor(Math.random() * 200)) : d.j--;
-  }
-
-  var m = new ej();
-  const B = m.promise;
+  if (!vm.a)
+    throw new BGError(2, "[BG]: Init failed");
 
   try {
-    C = w((0, vm.a)(program, b, true, undefined, c)).next().value;
-    BC = m.promise.then(function () { });
-  } catch (p) {
-    console.error(p);
+    await vm.a(program, attFunctionsCallback, true, undefined, () => {/** no-op */});
+  } catch (err) {
+    throw new BGError(3, `[BG]: Failed to load program: ${err.message}`);
   }
 
-  const data = {
-    zl: undefined,
-    eU: undefined,
-    hU: undefined
-  };
+  if (!attFunctions.fn1)
+    throw new BGError(4, "[BG]: Att function 1 unavailable. Cannot proceed.");
 
-  const e4 = [];
+  /** @type {string | null} */
+  let botguardResponse = null;
+  /** @type {Function[]} */
+  let postProcessFunctions = [];
+  /** @type {string | null} */
+  let integrityToken = null;
 
-  const iTokenPayload = B.then(function (l) {
-    var d = l.E7;
-    return new Promise(function (resolve) {
-      d(function (h) {
-        // h is GenerateIT's payload token
-        resolve(h);
-      }, [data.zl, data.eU, e4, data.hU]);
-    });
-  });
+  await attFunctions.fn1((response) => botguardResponse = response, [, , postProcessFunctions,]);
 
-  const body = [clientId, await iTokenPayload];
+  if (!botguardResponse)
+    throw new BGError(5, "[BG]: No response");
 
-  const options = {
+  if (!postProcessFunctions.length)
+    throw new BGError(6, "[BG]: Got response but no post-process functions");
+
+  const payload = [requestKey, botguardResponse];
+
+  const integrityTokenResponse = await bgConfig.fetch(GENERATE_IT_URL, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json+protobuf',
       'x-goog-api-key': GOOG_API_KEY,
       'x-user-agent': 'grpc-web-javascript/0.1',
       'User-Agent': USER_AGENT,
-      Accept: 'application/json'
+      'Accept': '*/*'
     },
-    body: JSON.stringify(body)
+    body: JSON.stringify(payload)
+  });
+
+  if (!integrityTokenResponse.ok)
+    throw new BGError(7, '[GenerateIT]: Failed to generate integrity token');
+
+  const integrityTokenData = await integrityTokenResponse.json();
+
+  if (!integrityTokenData.length || !integrityTokenData[0])
+    throw new BGError(8, "[GenerateIT]: Expected an integrity token but got none");
+
+  integrityToken = integrityTokenData[0];
+
+  return {
+    integrityToken,
+    postProcessFunctions
   };
-
-  const generateIntegrityTokenResponse = await bgConfig.fetch(GENERATE_IT_URL, options);
-
-  if (!generateIntegrityTokenResponse.ok) {
-    throw new Error('Failed to generate integrity token');
-  }
-
-  const integrityTokenData = await generateIntegrityTokenResponse.json();
-
-  return { e4, integrityToken: integrityTokenData[0] };
 }
