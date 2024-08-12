@@ -1,4 +1,4 @@
-import { e1, mg, Ze } from '../utils/utils.mjs';
+import { e1, mg, Ze, BGError } from '../utils/utils.mjs';
 import { CREATE_CHALLENGE_URL, GOOG_API_KEY, USER_AGENT } from '../utils/constants.mjs';
 
 /**
@@ -14,7 +14,7 @@ export async function get(bgConfig, scriptId) {
     throw new Error('CID:Unavailable');
 
   if (!bgConfig.fetch)
-    throw new PoTokenError(3, "Fetch:Unavailable");
+    throw new BGError(3, "Fetch:Unavailable");
 
   const payload = [clientId];
 

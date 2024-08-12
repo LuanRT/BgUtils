@@ -134,7 +134,7 @@ export const bj = function (a, b, c) {
   return b
 }
 
-export class PoTokenError {
+export class BGError {
   constructor(code, message) {
     this.code = code;
     this.message = message;
@@ -295,7 +295,7 @@ export function mg(sChal, b) {
 export function j(a) {
   var b = a();
   if (b.length > 118)
-    throw new PoTokenError(19, "DFO:Invalid");
+    throw new BGError(19, "DFO:Invalid");
   a = Math.floor(Date.now() / 1E3);
   var c = [Math.random() * 255, Math.random() * 255]
     , d = c.concat([0 & 255, 3], [a >> 24 & 255, a >> 16 & 255, a >> 8 & 255, a & 255]);

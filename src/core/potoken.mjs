@@ -1,5 +1,5 @@
 import { GENERATE_IT_URL, GOOG_API_KEY, USER_AGENT } from '../utils/constants.mjs';
-import { Qe, ej, w, Ze, bj, PoTokenError } from '../utils/utils.mjs';
+import { Qe, ej, w, Ze, bj, BGError } from '../utils/utils.mjs';
 
 /**
  * @typedef {{
@@ -13,7 +13,7 @@ import { Qe, ej, w, Ze, bj, PoTokenError } from '../utils/utils.mjs';
  * Generates a Proof of Origin token.
  * @param {CreatePoTokenArgs} args - The arguments for generating the token.
  * @returns {Promise<string>} - A Proof of Origin token.
- * @throws {PoTokenError} If an error occurs during token generation.
+ * @throws {BGError} If an error occurs during token generation.
  */
 export async function create(args) {
   const { program, bgConfig, globalName } = args;
@@ -25,12 +25,12 @@ export async function create(args) {
     const X = bg.e4[0];
 
     if (!X)
-      throw new PoTokenError(4, "PMD:Undefined");
+      throw new BGError(4, "PMD:Undefined");
 
     const V = await X(Ze({ j: bg.integrityToken }));
 
     if ((typeof V !== "function"))
-      throw new PoTokenError(16, "APF:Failed");
+      throw new BGError(16, "APF:Failed");
 
     const a = bj(undefined, function () {
       return V(new TextEncoder().encode(visitorData));
@@ -62,13 +62,13 @@ async function initBotguard(bgConfig, program, globalName) {
   const clientId = bgConfig.clientId;
 
   if (!vm)
-    throw new PoTokenError(1, "VM:Unavailable");
+    throw new BGError(1, "VM:Unavailable");
 
   if (!clientId)
-    throw new PoTokenError(2, "CID:Unavailable");
+    throw new BGError(2, "CID:Unavailable");
 
   if (!bgConfig.fetch)
-    throw new PoTokenError(3, "Fetch:Unavailable");
+    throw new BGError(3, "Fetch:Unavailable");
 
   let C;
   let BC;
