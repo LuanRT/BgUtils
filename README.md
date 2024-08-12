@@ -53,7 +53,7 @@ curl --request POST \
   --header 'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36' \
   --header 'x-goog-api-key: AIzaSyDyT5W0Jh49F30Pqqtyfdf7pDLFKLJoAnw' \
   --header 'x-user-agent: grpc-web-javascript/0.1' \
-  --data '[ "clientidhere" ]'
+  --data '[ "requestKeyHere" ]'
 ```
 
 Once the data from the request is available, it must then be descrambled and parsed. The descrambled data should consist of a tag, a program, a script, and a token of unknown purpose.
@@ -66,31 +66,38 @@ This is a very important step. The Integrity Token is retrieved from an attestat
 
 To "solve" the challenge, you must invoke BotGuard and use the program we retrieved as its first parameter.
 
-**NOTE**: The following code is a minified version of the actual code.
 ```js
-C = vm.a(program, b, true, undefined, c))
+if (!vm.a)
+  throw new BGError(2, "[BG]: Init failed");
+
+try {
+  await vm.a(program, attFunctionsCallback, true, undefined, () => {/** no-op */ });
+} catch (err) {
+  throw new BGError(3, `[BG]: Failed to load program: ${err.message}`);
+}
 ```
 
 The second parameter should point to a callback function, where BotGuard will return another function that will later be used to retrieve the payload for the integrity token request.
 
 Once that function is available, call it with the following arguments:
-1. A callback function with one argument. This function will return the payload for the attestation request.
+1. A callback function with one argument. This function will return the token for the attestation request.
 2. An array with 4 items. You can leave most of them as undefined/null, except for the 3rd item, point it to an array, BotGuard will fill it with one or more functions if the challenge is successfully solved.
 
 ```js
-const iTokenPayload = B.then(function (l) {
-  var d = l.E7;
-  return new Promise(function (resolve) {
-    d(function (h) {
-      resolve(h);
-    }, [data.zl, data.eU, e4, data.hU]);
-  });
-});
+// ...
+/** @type {string | null} */
+let botguardResponse = null;
+/** @type {Function[]} */
+let postProcessFunctions = [];
+/** @type {string | null} */
+let integrityToken = null;
+
+await attFunctions.fn1((response) => botguardResponse = response, [, , postProcessFunctions,]);
 ```
 
 If everything was done correctly so far, you should have a token and an array with one or more functions.
 
-Now we can create the payload for the request we'll be doing next! It should consist of an array with two items, the first one should be an id (probably client id) and the second one should be the token we just got:
+Now we can create the payload for the request we'll be doing next! It should consist of an array with two items, the first one should be the request key and the second one should be the token we just got:
   
 ```shell
 curl --request POST \
@@ -100,7 +107,7 @@ curl --request POST \
   --header 'User-Agent: insomnia/9.3.3' \
   --header 'x-goog-api-key: AIzaSyDyT5W0Jh49F30Pqqtyfdf7pDLFKLJoAnw' \
   --header 'x-user-agent: grpc-web-javascript/0.1' \
-  --data '[ "clientidhere", "$abcdeyourtokenhere" ]'
+  --data '[ "requestKeyHere", "$abcdeyourtokenhere" ]'
 ```
 
 If the API call is successful, you will get a JSPB response (json+protobuf) that looks like this:
@@ -120,14 +127,23 @@ Store the token and the first function of the array we got earlier. We'll use th
 
 First, call the function from the last step using the integrity token (in bytes) as an argument.
 
-**NOTE**: The following code is a minified version of the actual code.
 ```js
-const V = await X(Ze({ j: bg.integrityToken }));
+const processIntegrityToken = bg.postProcessFunctions[0];
+
+if (!processIntegrityToken)
+  throw new BGError(4, "PMD:Undefined");
+
+const acquirePo = await processIntegrityToken(base64ToU8(bg.integrityToken));
 ```
 
 If this call succeeds, you should get another function. Call it with your visitor data id (in bytes) as its first argument. 
 ```js
-const potBytes = V(new TextEncoder().encode(visitorData));
+const buffer = await acquirePo(new TextEncoder().encode(visitorData));
+
+const poToken = u8ToBase64(buffer, true);
+
+if (poToken.length > 80)
+  return poToken;
 ```
 
 The result will be a sequence of bytes, with a length of around 110-128 bytes. Convert it to a string and you'll have a valid PoToken!
