@@ -1,12 +1,12 @@
 import { BG } from '../../../..';
-import { Innertube, Proto, UniversalCache, UMP, Utils } from 'youtubei.js/web';
+import { Innertube, Proto, UniversalCache, UMP, Utils, YTNodes } from 'youtubei.js/web';
 
 // @ts-expect-error shaka-player does not have good types
 import shaka from 'shaka-player/dist/shaka-player.ui.js';
 
 import 'shaka-player/dist/controls.css';
 
-const fetchFn = async (input: RequestInfo | URL, init?: RequestInit) => {
+function fetchFn(input: RequestInfo | URL, init?: RequestInit) {
   const url = typeof input === 'string'
     ? new URL(input)
     : input instanceof URL
@@ -54,15 +54,14 @@ const metadata = document.getElementById('metadata') as HTMLDivElement;
 const loader = document.getElementById('loader') as HTMLDivElement;
 const form = document.querySelector('form') as HTMLFormElement;
 
-async function main() {
+async function getPo(identity: string): Promise<string | undefined> {
   const bgClientId = 'O43z0dpjhgX20SCx4KAo';
-  const visitorData = Proto.encodeVisitorData(Utils.generateRandomString(11), Math.floor(Date.now() / 1000));
 
   const bgConfig = {
     fetch: fetchFn,
     requestKey: bgClientId,
     globalObj: window,
-    identity: visitorData
+    identity
   };
 
   const challenge = await BG.Challenge.get(bgConfig);
@@ -75,7 +74,7 @@ async function main() {
     if (script)
       new Function(script)();
   } else {
-    console.warn('Unable to load Botguard.');
+    console.warn('Unable to load VM.');
   }
 
   const poToken = await BG.PoToken.create({
@@ -84,13 +83,35 @@ async function main() {
     bgConfig
   });
 
-  const yt = await Innertube.create({
+  if (!poToken)
+    return undefined;
+
+  return poToken;
+}
+
+async function main() {
+  const oauthCreds = undefined;
+  // const oauthCreds = {
+  //   access_token: 'ya29.abcd',
+  //   refresh_token: '1//0abcd',
+  //   scope: 'https://www.googleapis.com/auth/youtube-paid-content https://www.googleapis.com/auth/youtube',
+  //   token_type: 'Bearer',
+  //   expiry_date: '2024-08-13T04:41:34.757Z'
+  // };
+
+  const visitorData = Proto.encodeVisitorData(Utils.generateRandomString(11), Math.floor(Date.now() / 1000));
+  const poToken = await getPo(visitorData);
+
+  let yt = await Innertube.create({
     po_token: poToken,
     visitor_data: visitorData,
     fetch: fetchFn,
     generate_session_locally: true,
     cache: new UniversalCache(false)
   });
+
+  if (oauthCreds)
+    await yt.session.signIn(oauthCreds);
 
   form.animate({ opacity: [0, 1] }, { duration: 300, easing: 'ease-in-out' });
   form.style.display = 'block';
@@ -132,6 +153,28 @@ async function main() {
         videoId = endpoint.payload.videoId;
       } else {
         videoId = videoIdOrURL;
+      }
+
+      if (yt.session.logged_in) {
+        const user = await yt.account.getInfo();
+        const accountItemSections = user.page.contents_memo?.getType(YTNodes.AccountItemSection);
+
+        if (accountItemSections) {
+          const accountItemSection = accountItemSections.first();
+          const accountItem = accountItemSection.contents.first();
+          const datasyncIdToken = `${accountItem.endpoint.payload.directSigninIdentity.effectiveObfuscatedGaiaId}||`;
+          const poToken = await getPo(datasyncIdToken);
+
+          yt = await Innertube.create({
+            po_token: poToken,
+            visitor_data: visitorData,
+            fetch: fetchFn,
+            generate_session_locally: true,
+            cache: new UniversalCache(false),
+          });
+
+          await yt.session.signIn(oauthCreds);
+        }
       }
 
       const info = await yt.getInfo(videoId);
