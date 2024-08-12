@@ -179,5 +179,5 @@ export function createPlaceholder(identity) {
     dataArray[i] ^= dataArray[i % randomValues.length];
   }
 
-  return result;
+  return u8ToBase64(result);
 }
