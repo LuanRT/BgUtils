@@ -62,7 +62,7 @@ async function main() {
     fetch: fetchFn,
     requestKey: bgClientId,
     globalObj: window,
-    visitorData,
+    identity: visitorData
   };
 
   const challenge = await BG.Challenge.get(bgConfig);

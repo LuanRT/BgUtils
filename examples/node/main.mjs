@@ -13,7 +13,7 @@ globalThis.document = dom.window.document;
 const bgConfig = {
   fetch: (url, options) => fetch(url, options),
   globalObj: globalThis,
-  visitorData,
+  identity: visitorData,
   requestKey,
 };
 

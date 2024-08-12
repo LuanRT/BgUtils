@@ -17,7 +17,7 @@ import { u8ToBase64, BGError, base64ToU8 } from '../utils/utils.mjs';
  */
 export async function create(args) {
   const { program, bgConfig, globalName } = args;
-  const { visitorData } = bgConfig;
+  const { identity } = bgConfig;
 
   const bg = await initialize(bgConfig, program, globalName);
 
@@ -32,7 +32,7 @@ export async function create(args) {
     if (typeof acquirePo !== "function")
       throw new BGError(16, "APF:Failed");
 
-    const buffer = await acquirePo(new TextEncoder().encode(visitorData));
+    const buffer = await acquirePo(new TextEncoder().encode(identity));
 
     const poToken = u8ToBase64(buffer, true);
 

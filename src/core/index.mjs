@@ -7,7 +7,7 @@
  * @typedef {{ 
  *  fetch: FetchFunction;
  *  globalObj: Record<string, any>;
- *  visitorData: string;
+ *  identity: string;
  *  requestKey: string;
  * }} BgConfig
  */

@@ -136,9 +136,9 @@ if (!processIntegrityToken)
 const acquirePo = await processIntegrityToken(base64ToU8(bg.integrityToken));
 ```
 
-If this call succeeds, you should get another function. Call it with your visitor data id (in bytes) as its first argument. 
+If this call succeeds, you should get another function. Call it with your visitor data id (or datasync id if you're signed in) as its first argument. 
 ```js
-const buffer = await acquirePo(new TextEncoder().encode(visitorData));
+const buffer = await acquirePo(new TextEncoder().encode(identity));
 
 const poToken = u8ToBase64(buffer, true);
 
