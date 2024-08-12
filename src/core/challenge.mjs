@@ -4,8 +4,10 @@ import { CREATE_CHALLENGE_URL, GOOG_API_KEY, USER_AGENT } from '../utils/constan
 /**
  * Retrieves a challenge for the specified client ID.
  * @param {import('./index.mjs').BgConfig} bgConfig - The config.
+ * @param {string} scriptId - The ID of the challenge script. If provided, the server will assume that
+ * that the client already has the script and will not return it.
  */
-export async function get(bgConfig) {
+export async function get(bgConfig, scriptId) {
   const clientId = bgConfig.clientId;
 
   if (!clientId)
@@ -14,7 +16,12 @@ export async function get(bgConfig) {
   if (!bgConfig.fetch)
     throw new PoTokenError(3, "Fetch:Unavailable");
 
-  const options = {
+  const payload = [clientId];
+
+  if (scriptId)
+    payload.push(scriptId);
+
+  const response = await bgConfig.fetch(CREATE_CHALLENGE_URL, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json+protobuf',
@@ -22,10 +29,8 @@ export async function get(bgConfig) {
       'x-goog-api-key': GOOG_API_KEY,
       'x-user-agent': 'grpc-web-javascript/0.1'
     },
-    body: JSON.stringify([clientId])
-  };
-
-  const response = await bgConfig.fetch(CREATE_CHALLENGE_URL, options);
+    body: JSON.stringify(payload)
+  });
 
   if (!response.ok) {
     throw new Error('Failed to retrieve challenge');
