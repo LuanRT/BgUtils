@@ -20,7 +20,7 @@ This library facilitates the generation of PoTokens (Proof of Origin Token) with
 
 ## Caveats
 
-1. Currently, the BotGuard script needs a "good enough" `document` implementation to work. Libraries like `jsdom` can be used to provide a virtual `document`, and an example of how to do this can be found [here](./examples/node). Note that this is only necessary for Node.js and Deno. Electron and other Chromium-based environments should work out of the box with 0 dependencies.
+1. Currently, the BotGuard script needs a "good enough" `document` implementation to work. Libraries like `jsdom` can be used to provide a virtual `document`, and an example of how to do this can be found [here](./examples/node). Note that this is only necessary for Node.js, Deno, and Bun. Electron and other Chromium-based environments should work out of the box with 0 dependencies.
 
 2. Suppose the browser requirements change in the future. In that case, `jsdom` and similar libraries may not be able to provide the necessary functionality, and thus the library may only work in web applications.
 
