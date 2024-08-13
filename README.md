@@ -1,5 +1,5 @@
 # What Is This?
-This library facilitates the generation of PoTokens (Proof of Identity Token) without external dependencies.
+This library facilitates the generation of PoTokens (Proof of Origin Token) without external dependencies.
 
 - [What Is This?](#what-is-this)
   - [Features](#features)
