@@ -4,7 +4,7 @@ import { CREATE_CHALLENGE_URL, GOOG_API_KEY, USER_AGENT } from '../utils/constan
 /**
  * @typedef {{
  *  script?: (string | null)[];
- *  scriptId: string;
+ *  interpreterHash: string;
  *  globalName: string;
  *  challenge: string;
  *  messageId: string;
@@ -14,11 +14,11 @@ import { CREATE_CHALLENGE_URL, GOOG_API_KEY, USER_AGENT } from '../utils/constan
 /**
  * Retrieves a challenge for the specified client ID.
  * @param {import('./index.mjs').BgConfig} bgConfig - The config.
- * @param {string} [scriptId] - The ID of the challenge script. If provided, the server will assume that
+ * @param {string} [interpreterHash] - The ID of the challenge script. If provided, the server will assume that
  * that the client already has the script and will not return it.
  * @returns {Promise<DescrambledChallenge | undefined>} - The challenge data.
  */
-export async function get(bgConfig, scriptId) {
+export async function get(bgConfig, interpreterHash) {
   const requestKey = bgConfig.requestKey;
 
   if (!requestKey)
@@ -29,8 +29,8 @@ export async function get(bgConfig, scriptId) {
 
   const payload = [requestKey];
 
-  if (scriptId)
-    payload.push(scriptId);
+  if (interpreterHash)
+    payload.push(interpreterHash);
 
   const response = await bgConfig.fetch(CREATE_CHALLENGE_URL, {
     method: 'POST',
@@ -60,7 +60,7 @@ export async function get(bgConfig, scriptId) {
  * @param {string} scrambledChallenge - The scrambled challenge.
  * @returns {DescrambledChallenge | undefined} The descrambled challenge:
  *   - script: The script associated with the challenge.
- *   - scriptId: The id of the script.
+ *   - interpreterHash: The id of the script.
  *   - globalName: The name of the VM in the global scope.
  *   - challenge: The challenge data.
  *   - messageId: The ID of the JSPB message.
@@ -70,11 +70,11 @@ export function descramble(scrambledChallenge) {
 
   if (buffer.length) {
     const descrambled = new TextDecoder().decode(buffer.map(b => b + 97));
-    const [messageId, script, , scriptId, challenge, globalName] = JSON.parse(descrambled);
+    const [messageId, script, , interpreterHash, challenge, globalName] = JSON.parse(descrambled);
 
     return {
       script,
-      scriptId,
+      interpreterHash,
       globalName,
       challenge,
       messageId
