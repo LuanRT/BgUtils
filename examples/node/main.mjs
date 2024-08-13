@@ -1,5 +1,8 @@
 import { JSDOM } from 'jsdom';
 import { Innertube, UniversalCache, Proto, Utils } from 'youtubei.js';
+// Bun:
+// import { Innertube, UniversalCache, Proto, Utils } from 'youtubei.js/web';
+
 import { BG } from '../../src/index.mjs';
 
 const requestKey = 'O43z0dpjhgX20SCx4KAo';

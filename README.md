@@ -14,9 +14,9 @@ This library facilitates the generation of PoTokens (Proof of Identity Token) wi
 ## Features 
 
 - **No browser**: Integrates directly with BotGuard, avoiding the need for browsers.
-- **Works anywhere**: Node.js, Deno, and modern browsers are currently supported.
+- **Works anywhere**: Node.js, Deno, Bun, and modern browsers are currently supported.
 - **Extremely fast**: No browser also means no unneeded assets and scripts being downloaded, making it much more efficient.
-- **Lightweight**: The library is less than 8KB in size!
+- **Lightweight**: The library is less than 4KB in size!
 
 ## Caveats
 
@@ -27,7 +27,7 @@ This library facilitates the generation of PoTokens (Proof of Identity Token) wi
 ## Usage
 
 Please refer to the provided examples:
-[Browsers](./examples/browser) | [Node.js & Deno](./examples/node)
+[Browsers](./examples/browser) | [Node.js, Deno, and Bun](./examples/node)
 
 ## Research
 
