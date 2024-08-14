@@ -12,13 +12,13 @@ import { CREATE_CHALLENGE_URL, GOOG_API_KEY, USER_AGENT } from '../utils/constan
  */
 
 /**
- * Retrieves a challenge for the specified client ID.
+ * Creates a challenge.
  * @param {import('./index.mjs').BgConfig} bgConfig - The config.
  * @param {string} [interpreterHash] - The ID of the challenge script. If provided, the server will assume that
  * that the client already has the script and will not return it.
  * @returns {Promise<DescrambledChallenge | undefined>} - The challenge data.
  */
-export async function get(bgConfig, interpreterHash) {
+export async function create(bgConfig, interpreterHash) {
   const requestKey = bgConfig.requestKey;
 
   if (!requestKey)

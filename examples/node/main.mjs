@@ -20,7 +20,7 @@ const bgConfig = {
   requestKey,
 };
 
-const challenge = await BG.Challenge.get(bgConfig);
+const challenge = await BG.Challenge.create(bgConfig);
 
 if (!challenge)
   throw new Error('Could not get challenge');
@@ -33,7 +33,7 @@ if (challenge.script) {
   console.warn('Unable to load Botguard.');
 }
 
-const poToken = await BG.PoToken.create({
+const poToken = await BG.PoToken.generate({
   program: challenge.challenge,
   globalName: challenge.globalName,
   bgConfig

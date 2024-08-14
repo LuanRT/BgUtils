@@ -64,7 +64,7 @@ async function getPo(identity: string): Promise<string | undefined> {
     identity
   };
 
-  const challenge = await BG.Challenge.get(bgConfig);
+  const challenge = await BG.Challenge.create(bgConfig);
 
   if (!challenge)
     throw new Error('Could not get challenge');
@@ -77,7 +77,7 @@ async function getPo(identity: string): Promise<string | undefined> {
     console.warn('Unable to load VM.');
   }
 
-  const poToken = await BG.PoToken.create({
+  const poToken = await BG.PoToken.generate({
     program: challenge.challenge,
     globalName: challenge.globalName,
     bgConfig

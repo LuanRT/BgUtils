@@ -10,16 +10,16 @@ import { u8ToBase64, BGError, base64ToU8 } from '../utils/utils.mjs';
  */
 
 /**
- * Generates a Proof of Origin token.
+ * Generates a Proof of Origin Token.
  * @param {CreatePoTokenArgs} args - The arguments for generating the token.
  * @returns {Promise<string | undefined>} - A Proof of Origin token.
  * @throws {BGError} If an error occurs during token generation.
  */
-export async function create(args) {
+export async function generate(args) {
   const { program, bgConfig, globalName } = args;
   const { identity } = bgConfig;
 
-  const bg = await initialize(bgConfig, program, globalName);
+  const bg = await invokeBotguard(program, globalName, bgConfig);
 
   if (bg.postProcessFunctions.length) {
     const processIntegrityToken = bg.postProcessFunctions[0];
@@ -50,12 +50,12 @@ export async function create(args) {
 
 /**
  * Initializes the Botguard VM.
- * @param {import('./index.mjs').BgConfig} bgConfig
  * @param {string} program 
  * @param {string} globalName 
+ * @param {import('./index.mjs').BgConfig} bgConfig
  * @returns {Promise<BotguardResponse>}
  */
-async function initialize(bgConfig, program, globalName) {
+async function invokeBotguard(program, globalName, bgConfig) {
   const vm = bgConfig.globalObj[globalName];
   const requestKey = bgConfig.requestKey;
 
@@ -149,7 +149,7 @@ async function initialize(bgConfig, program, globalName) {
  * @param {string} identity - Visitor data or datasync ID.
  * @returns {string}
  */
-export function createPlaceholder(identity) {
+export function generatePlaceholder(identity) {
   if (identity.length > 118)
     throw new BGError(19, "DFO:Invalid");
 
