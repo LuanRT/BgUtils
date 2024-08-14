@@ -6,12 +6,12 @@ import { u8ToBase64, BGError, base64ToU8 } from '../utils/utils.mjs';
  *  program: string;
  *  bgConfig: import('./index.mjs').BgConfig;
  *  globalName: string;
- * }} CreatePoTokenArgs
+ * }} PoTokenArgs
  */
 
 /**
  * Generates a Proof of Origin Token.
- * @param {CreatePoTokenArgs} args - The arguments for generating the token.
+ * @param {PoTokenArgs} args - The arguments for generating the token.
  * @returns {Promise<string | undefined>} - A Proof of Origin token.
  * @throws {BGError} If an error occurs during token generation.
  */
