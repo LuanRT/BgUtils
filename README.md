@@ -56,7 +56,7 @@ curl --request POST \
   --data '[ "requestKeyHere" ]'
 ```
 
-Once the data from the request is available, it must then be descrambled and parsed. The descrambled data should consist of a tag, a program, a script, and a token of unknown purpose.
+Once the data from the request is available, it must then be descrambled and parsed. The descrambled data should consist of a message ID, a script, the interpreter hash, a program/challenge, and the script's global name.
 
 To make the VM available in the global scope, evaluate the script. If all goes well, you should be able to access the VM from your browser or program.
 
