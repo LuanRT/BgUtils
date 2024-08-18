@@ -49,7 +49,7 @@ To initialize the bg VM, we must first retrieve its script & challenge:
 curl --request POST \
   --url 'https://jnn-pa.googleapis.com/$rpc/google.internal.waa.v1.Waa/Create' \
   --header 'Content-Type: application/json+protobuf' \
-  --header 'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36' \
+  --header 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36(KHTML, like Gecko)' \
   --header 'x-goog-api-key: AIzaSyDyT5W0Jh49F30Pqqtyfdf7pDLFKLJoAnw' \
   --header 'x-user-agent: grpc-web-javascript/0.1' \
   --data '[ "requestKeyHere" ]'
@@ -103,7 +103,7 @@ curl --request POST \
   --url 'https://jnn-pa.googleapis.com/$rpc/google.internal.waa.v1.Waa/GenerateIT' \
   --header 'Accept: application/json' \
   --header 'Content-Type: application/json+protobuf' \
-  --header 'User-Agent: insomnia/9.3.3' \
+  --header 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36(KHTML, like Gecko)' \
   --header 'x-goog-api-key: AIzaSyDyT5W0Jh49F30Pqqtyfdf7pDLFKLJoAnw' \
   --header 'x-user-agent: grpc-web-javascript/0.1' \
   --data '[ "requestKeyHere", "$abcdeyourtokenhere" ]'
@@ -112,9 +112,9 @@ curl --request POST \
 If the API call is successful, you will get a JSPB response (json+protobuf) that looks like this:
 ```json
 [
-	"azXvdvYQKz8ff4h9PjIlQI7JUOTtYnBdXEGs4bmQb8FvmFB+oosILg6flcoDfzFpwas/hitYcUzx3Qm+DFtQ9slN",
-	43200,
-	100,
+  "azXvdvYQKz8ff4h9PjIlQI7JUOTtYnBdXEGs4bmQb8FvmFB+oosILg6flcoDfzFpwas/hitYcUzx3Qm+DFtQ9slN",
+  43200,
+  100,
 ]
 ```
 
