@@ -6,17 +6,16 @@ This library facilitates the generation of PoTokens (Proof of Origin Token) with
   - [Caveats](#caveats)
   - [Usage](#usage)
   - [Research](#research)
-    - [When to Use a PoToken](#when-to-use-a-potoken)
+    - [When to use a PoToken](#when-to-use-a-potoken)
     - [Initialization Process](#initialization-process)
     - [Retrieving Integrity Token](#retrieving-integrity-token)
     - [Generating a PoToken](#generating-a-potoken)
 
 ## Features 
 
-- **No browser**: Integrates directly with BotGuard, avoiding the need for browsers.
 - **Works anywhere**: Node.js, Deno, Bun, and modern browsers are currently supported.
-- **Extremely fast**: No browser also means no unneeded assets and scripts being downloaded, making it much more efficient.
-- **Lightweight**: The library is less than 4KB in size!
+- **Extremely fast**: The library directly interfaces with BotGuard's API, avoiding unnecessary asset and script downloads, making it very efficient.
+- **Lightweight**: It's less than 4KB in size!
 
 ## Caveats
 
@@ -33,7 +32,7 @@ Please refer to the provided examples:
 
 Below is a brief overview of the process to generate a PoToken for those interested in the inner workings of the library and seeking to port it to other languages.
 
-### When to Use a PoToken
+### When to use a PoToken
 
 YouTube's web player checks the "sps" (`StreamProtectionStatus`) of each media segment request (only if using `UMP` or `SABR`; our browser example uses `UMP`) to determine if the stream needs a PoToken.
 
