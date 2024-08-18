@@ -1,8 +1,8 @@
 {
   "type": "module",
   "name": "bgutils-js",
-  "version": "1.0.0",
-  "description": "",
+  "version": "1.0.1",
+  "description": "A JavaScript library for interfacing with Botguard.",
   "main": "dist/index.cjs",
   "module": "dist/index.esm.js",
   "author": "LuanRT <luan.lrt4@gmail.com> (https://github.com/LuanRT)",
@@ -13,7 +13,11 @@
     "build": "npm run clean && esbuild src/index.mjs --bundle --minify --outfile=dist/index.esm.js --format=esm && esbuild src/index.mjs --bundle --minify --outfile=dist/index.cjs --format=cjs && tsc",
     "prepare": "npm run build"
   },
-  "keywords": [],
+  "keywords": [
+    "youtube",
+    "botguard",
+    "potoken"
+  ],
   "license": "MIT",
   "devDependencies": {
     "esbuild": "^0.14.0",
