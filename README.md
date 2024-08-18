@@ -145,4 +145,4 @@ if (poToken.length > 80)
   return poToken;
 ```
 
-The result will be a sequence of bytes, with a length of around 110-128 bytes. Convert it to a string and you'll have a valid PoToken!
+The result will be a sequence of bytes, with a length of around 110-128 bytes. Base64 encode it and you'll have your PoToken!
