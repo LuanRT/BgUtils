@@ -4,8 +4,11 @@
     "emitDeclarationOnly": true,
     "allowJs": true,
     "outDir": "./dist",
+    "importHelpers": true,
     "lib": [
-      "ESNext"
+      "ESNext",
+      "DOM",
+      "DOM.Iterable"
     ],
     "target": "ESNext",
     "moduleResolution": "node"
