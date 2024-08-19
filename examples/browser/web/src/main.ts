@@ -55,12 +55,12 @@ const loader = document.getElementById('loader') as HTMLDivElement;
 const form = document.querySelector('form') as HTMLFormElement;
 
 async function getPo(identity: string): Promise<string | undefined> {
-  const bgClientId = 'O43z0dpjhgX20SCx4KAo';
+  const requestKey = 'O43z0dpjhgX20SCx4KAo';
 
   const bgConfig = {
     fetch: fetchFn,
-    requestKey: bgClientId,
     globalObj: window,
+    requestKey,
     identity
   };
 
