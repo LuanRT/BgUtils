@@ -51,7 +51,7 @@ const yt = await Innertube.create({
   cache: new UniversalCache(),
 });
 
-const info = await yt.getBasicInfo('5tv1sn-TAWM');
+const info = await yt.getBasicInfo('FeqhtDOhX6Y');
 const audioStreamingURL = info.chooseFormat({ quality: 'best', type: 'audio' }).decipher(yt.session.player);
 
 console.info("Streaming URL:", audioStreamingURL);
