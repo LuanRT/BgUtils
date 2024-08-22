@@ -1,0 +1,48 @@
+{
+  "name": "bgutils-js",
+  "version": "1.1.0",
+  "description": "A JavaScript library for interfacing with Botguard.",
+  "main": "dist/index.js",
+  "type": "module",
+  "types": "./dist/index.d.ts",
+  "module": "./dist/index.js",
+  "scripts": {
+    "lint": "npx eslint ./src/**/*.ts",
+    "lint:fix": "npx eslint --fix ./src/**/*.ts",
+    "clean": "npx rimraf ./dist ./bundle",
+    "build": "npm run lint && npm run clean && npm run build:esm && npm run bundle:node",
+    "build:esm": "npx tsc",
+    "bundle:node": "npx esbuild ./dist/index.js --bundle --outfile=./bundle/index.cjs --platform=node --target=node10 --format=cjs --sourcemap --banner:js=\"/* eslint-disable */\"",
+    "prepare": "npm run build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/LuanRT/BgUtils.git"
+  },
+  "keywords": [
+    "BotGuard",
+    "PoToken",
+    "YouTube"
+  ],
+  "author": "LuanRT <luan.lrt4@gmail.com> (https://github.com/LuanRT)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/LuanRT/BgUtils/issues"
+  },
+  "homepage": "https://github.com/LuanRT/BgUtils#readme",
+  "devDependencies": {
+    "@eslint/js": "^9.9.0",
+    "@stylistic/eslint-plugin": "^2.6.4",
+    "eslint": "^9.9.0",
+    "globals": "^15.9.0",
+    "typescript": "^5.5.4",
+    "typescript-eslint": "^8.2.0"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./bundle/index.cjs"
+    }
+  }
+}
