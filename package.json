@@ -10,7 +10,7 @@
     "lint": "npx eslint ./src/**/*.ts",
     "lint:fix": "npx eslint --fix ./src/**/*.ts",
     "clean": "npx rimraf ./dist ./bundle",
-    "build": "npm run lint && npm run clean && npm run build:esm && npm run bundle:node",
+    "build": "npm run clean && npm run lint && npm run build:esm && npm run bundle:node",
     "build:esm": "npx tsc",
     "bundle:node": "npx esbuild ./dist/index.js --bundle --outfile=./bundle/index.cjs --platform=node --target=node10 --format=cjs --sourcemap --banner:js=\"/* eslint-disable */\"",
     "prepare": "npm run build"
@@ -30,6 +30,9 @@
     "url": "https://github.com/LuanRT/BgUtils/issues"
   },
   "homepage": "https://github.com/LuanRT/BgUtils#readme",
+  "funding": [
+    "https://github.com/sponsors/LuanRT"
+  ],
   "devDependencies": {
     "@eslint/js": "^9.9.0",
     "@stylistic/eslint-plugin": "^2.6.4",
