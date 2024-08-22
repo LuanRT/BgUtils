@@ -4,8 +4,10 @@ import { Innertube, UniversalCache, Proto, Utils } from 'youtubei.js';
 // import { Innertube, UniversalCache, Proto, Utils } from 'youtubei.js/web';
 import { BG } from '../../dist/index.js';
 
+let innertube = await Innertube.create({ retrieve_player: false });
+
 const requestKey = 'O43z0dpjhgX20SCx4KAo';
-const visitorData = Proto.encodeVisitorData(Utils.generateRandomString(11), Math.floor(Date.now() / 1000));
+const visitorData = innertube.session.context.client.visitorData;
 
 const dom = new JSDOM();
 
@@ -45,13 +47,14 @@ console.log("Session Info:", {
 
 console.log('\n');
 
-const yt = await Innertube.create({
+innertube = await Innertube.create({
   po_token: poToken,
   visitor_data: visitorData,
   cache: new UniversalCache(),
+  generate_session_locally: true,
 });
 
-const info = await yt.getBasicInfo('FeqhtDOhX6Y');
-const audioStreamingURL = info.chooseFormat({ quality: 'best', type: 'audio' }).decipher(yt.session.player);
+const info = await innertube.getBasicInfo('FeqhtDOhX6Y');
+const audioStreamingURL = info.chooseFormat({ quality: 'best', type: 'audio' }).decipher(innertube.session.player);
 
 console.info("Streaming URL:", audioStreamingURL);
