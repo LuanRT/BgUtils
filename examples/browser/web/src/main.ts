@@ -1,8 +1,8 @@
 import { BG } from '../../../..';
 import { Innertube, Proto, UniversalCache, UMP, Utils, YTNodes } from 'youtubei.js/web';
 
-// @ts-expect-error shaka-player does not have good types
-import shaka from 'shaka-player/dist/shaka-player.ui.js';
+// @ts-expect-error - x
+import shaka from 'shaka-player/dist/shaka-player.ui';
 
 import 'shaka-player/dist/controls.css';
 
@@ -25,7 +25,7 @@ function fetchFn(input: RequestInfo | URL, init?: RequestInit) {
       : new Headers();
 
   // Now serialize the headers.
-  url.searchParams.set('__headers', JSON.stringify([...headers]));
+  url.searchParams.set('__headers', JSON.stringify([ ...headers ]));
 
   if (input instanceof Request) {
     // @ts-expect-error - x
@@ -91,12 +91,12 @@ async function getPo(identity: string): Promise<string | undefined> {
 
 async function main() {
   const oauthCreds = undefined;
-  // const oauthCreds = {
-  //   access_token: 'ya29.abcd',
-  //   refresh_token: '1//0abcd',
-  //   scope: 'https://www.googleapis.com/auth/youtube-paid-content https://www.googleapis.com/auth/youtube',
-  //   token_type: 'Bearer',
-  //   expiry_date: '2024-08-13T04:41:34.757Z'
+  // Const oauthCreds = {
+  //   Access_token: 'ya29.abcd',
+  //   Refresh_token: '1//0abcd',
+  //   Scope: 'https://www.googleapis.com/auth/youtube-paid-content https://www.googleapis.com/auth/youtube',
+  //   Token_type: 'Bearer',
+  //   Expiry_date: '2024-08-13T04:41:34.757Z'
   // };
 
   const visitorData = Proto.encodeVisitorData(Utils.generateRandomString(11), Math.floor(Date.now() / 1000));
@@ -113,7 +113,7 @@ async function main() {
   if (oauthCreds)
     await yt.session.signIn(oauthCreds);
 
-  form.animate({ opacity: [0, 1] }, { duration: 300, easing: 'ease-in-out' });
+  form.animate({ opacity: [ 0, 1 ] }, { duration: 300, easing: 'ease-in-out' });
   form.style.display = 'block';
 
   showUI({ hidePlayer: true });
@@ -170,7 +170,7 @@ async function main() {
             visitor_data: visitorData,
             fetch: fetchFn,
             generate_session_locally: true,
-            cache: new UniversalCache(false),
+            cache: new UniversalCache(false)
           });
 
           await yt.session.signIn(oauthCreds);
@@ -248,19 +248,19 @@ async function main() {
             bufferingGoal: (info.page[0].player_config?.media_common_config.dynamic_readahead_config.max_read_ahead_media_time_ms || 0) / 1000,
             rebufferingGoal: (info.page[0].player_config?.media_common_config.dynamic_readahead_config.read_ahead_growth_rate_ms || 0) / 1000,
             bufferBehind: 300,
-            autoLowLatencyMode: true,
+            autoLowLatencyMode: true
           },
           abr: {
             enabled: true,
             restrictions: {
-              maxBandwidth: Number(info.page[0].player_config?.stream_selection_config.max_bitrate),
-            },
-          },
+              maxBandwidth: Number(info.page[0].player_config?.stream_selection_config.max_bitrate)
+            }
+          }
         });
 
         let rn = 0;
 
-        player.getNetworkingEngine()?.registerRequestFilter((_type: any, request: any) => {
+        player.getNetworkingEngine()?.registerRequestFilter((_type: unknown, request: Record<string, any>) => {
           const uri = request.uris[0];
           const url = new URL(uri);
           const headers = request.headers;
@@ -272,15 +272,15 @@ async function main() {
           }
 
           request.method = 'POST';
-          request.body = new Uint8Array([120, 0]);
+          request.body = new Uint8Array([ 120, 0 ]);
 
           if (url.pathname === '/videoplayback') {
             if (headers.Range) {
               request.headers = {};
               url.searchParams.set('range', headers.Range.split('=')[1]);
-              url.searchParams.set("ump", "1");
-              url.searchParams.set("srfvp", "1");
-              url.searchParams.set("rn", rn.toString());
+              url.searchParams.set('ump', '1');
+              url.searchParams.set('srfvp', '1');
+              url.searchParams.set('rn', rn.toString());
               delete headers.Range;
             }
 
@@ -292,18 +292,18 @@ async function main() {
 
         const RequestType = shaka.net.NetworkingEngine.RequestType;
 
-        player.getNetworkingEngine()?.registerResponseFilter(async (type: any, response: any) => {
+        player.getNetworkingEngine()?.registerResponseFilter(async (type: unknown, response: Record<string, any>) => {
           let mediaData = new Uint8Array(0);
 
-          const handleRedirect = async (redirectData: any) => {
-            const redirectRequest = shaka.net.NetworkingEngine.makeRequest([redirectData.url], player!.getConfiguration().streaming.retryParameters);
+          const handleRedirect = async (redirectData: Proto.Redirect.Type) => {
+            const redirectRequest = shaka.net.NetworkingEngine.makeRequest([ redirectData.url ], player!.getConfiguration().streaming.retryParameters);
             const requestOperation = player!.getNetworkingEngine()!.request(type, redirectRequest);
             const redirectResponse = await requestOperation.promise;
 
             response.data = redirectResponse.data;
             response.headers = redirectResponse.headers;
             response.uri = redirectResponse.uri;
-          }
+          };
 
           const handleMediaData = async (data: Uint8Array, multipleMD: boolean) => {
             if (!multipleMD) {
@@ -318,7 +318,7 @@ async function main() {
 
               mediaData = tempMediaData;
             }
-          }
+          };
 
           if (type == RequestType.SEGMENT) {
             const ump = new UMP(new Uint8Array(response.data));
@@ -329,18 +329,21 @@ async function main() {
 
             for (const part of umpParts) {
               switch (part.type) {
-                case 20:
+                case 20: {
                   const mediaHeader = Proto.decodeMHeader(part.data);
                   console.info('[MediaHeader]:', mediaHeader);
                   break;
-                case 21:
+                }
+                case 21: {
                   handleMediaData(part.data, multipleMD);
                   break;
-                case 43:
+                }
+                case 43: {
                   const sabrRedirect = Proto.decodeSABRRedirect(part.data);
                   console.info('[SABRRedirect]:', sabrRedirect);
                   return await handleRedirect(sabrRedirect);
-                case 58:
+                }
+                case 58: {
                   const streamProtectionStatus = Proto.decodeStreamProtectionStatus(part.data);
                   switch (streamProtectionStatus.status) {
                     case 1:
@@ -356,8 +359,7 @@ async function main() {
                       break;
                   }
                   break;
-                default:
-                  break;
+                }
               }
             }
 
@@ -390,7 +392,7 @@ function showUI(args: { hidePlayer?: boolean } = {
   ytplayer.style.display = args.hidePlayer ? 'none' : 'block';
 
   const video_container = document.getElementById('video-container') as HTMLDivElement;
-  video_container.animate({ opacity: [0, 1] }, { duration: 300, easing: 'ease-in-out' });
+  video_container.animate({ opacity: [ 0, 1 ] }, { duration: 300, easing: 'ease-in-out' });
   video_container.style.display = 'block';
 
   loader.style.display = 'none';
