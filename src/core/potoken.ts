@@ -33,12 +33,12 @@ export async function generate(args: PoTokenArgs): Promise<string | undefined> {
 }
 
 type AttFunctions = {
-  fn1: (
-    (callback: (str: string) => void, args: any[]) => Promise<void>
-  ) | null;
-  fn2: (() => void) | null;
-  fn3: (() => void) | null;
-  fn4: (() => void) | null;
+  fn1?: (
+    (callback: (str: string) => void, args: any[]) => Promise<string>
+  );
+  fn2?: (() => void);
+  fn3?: (() => void);
+  fn4?: (() => void);
 };
 
 /**
@@ -60,14 +60,16 @@ async function invokeBotguard(program: string, globalName: string, bgConfig: BgC
   if (!bgConfig.fetch)
     throw new BGError(1, '[BG]: Fetch function not provided');
 
-  const attFunctions: AttFunctions = { fn1: null, fn2: null, fn3: null, fn4: null };
+  const attFunctions: AttFunctions = {};
 
-  function attFunctionsCallback(fn1: AttFunctions['fn1'], fn2: AttFunctions['fn2'], fn3: AttFunctions['fn3'], fn4: AttFunctions['fn4']) {
-    attFunctions.fn1 = fn1;
-    attFunctions.fn2 = fn2;
-    attFunctions.fn3 = fn3;
-    attFunctions.fn4 = fn4;
-  }
+  const attFunctionsCallback = (
+    fn1: AttFunctions['fn1'],
+    fn2: AttFunctions['fn2'],
+    fn3: AttFunctions['fn3'],
+    fn4: AttFunctions['fn4']
+  ) => {
+    Object.assign(attFunctions, { fn1, fn2, fn3, fn4 });
+  };
 
   if (!vm.a)
     throw new BGError(2, '[BG]: Init failed');
@@ -81,11 +83,14 @@ async function invokeBotguard(program: string, globalName: string, bgConfig: BgC
   if (!attFunctions.fn1)
     throw new BGError(4, '[BG]: Att function 1 unavailable. Cannot proceed.');
 
-  let botguardResponse: string | null = null;
+  let botguardResponse: string | undefined;
 
-  const postProcessFunctions: PostProcessFunction[] = [];
+  const postProcessFunctions: (PostProcessFunction | undefined)[] = [];
 
-  await attFunctions.fn1((response) => botguardResponse = response, [ ,, postProcessFunctions ]);
+  await attFunctions.fn1(
+    (response) => (botguardResponse = response),
+    [ , , postProcessFunctions ]
+  );
 
   if (!botguardResponse)
     throw new BGError(5, '[BG]: No response');
@@ -110,7 +115,7 @@ async function invokeBotguard(program: string, globalName: string, bgConfig: BgC
   if (!integrityTokenResponse.ok)
     throw new BGError(7, '[GenerateIT]: Failed to generate integrity token');
 
-  const integrityTokenData = await integrityTokenResponse.json();
+  const integrityTokenData = await integrityTokenResponse.json() as unknown[];
 
   if (!integrityTokenData.length)
     throw new BGError(8, '[GenerateIT]: No integrity token data received');

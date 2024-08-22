@@ -36,9 +36,9 @@ export async function create(bgConfig: BgConfig, interpreterHash?: string): Prom
   if (!response.ok)
     throw new BGError(2, `[Challenge]: Failed to fetch challenge: ${response.status}`);
 
-  const challenge = await response.json();
+  const challenge = await response.json() as unknown[];
 
-  if (challenge.length > 1 && challenge[1]) {
+  if (challenge.length > 1 && typeof challenge[1] === 'string') {
     const descrambledChallenge = descramble(challenge[1]);
     if (descrambledChallenge)
       return descrambledChallenge;

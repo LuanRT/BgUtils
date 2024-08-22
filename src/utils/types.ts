@@ -7,7 +7,7 @@ export type PoTokenArgs = {
 export type PostProcessFunction = (buffer: Uint8Array) => Promise<(identity: Uint8Array) => Promise<Uint8Array>>;
 
 export type BotguardResponse = {
-  postProcessFunctions: (PostProcessFunction)[];
+  postProcessFunctions: (PostProcessFunction | undefined)[];
   integrityToken: string;
 };
 
