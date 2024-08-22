@@ -3,6 +3,7 @@ This library facilitates the generation of PoTokens (Proof of Origin Tokens) wit
 
 - [What Is This?](#what-is-this)
   - [A Few Notes](#a-few-notes)
+  - [Installation](#installation)
   - [Usage](#usage)
   - [Research](#research)
     - [Initialization Process](#initialization-process)
@@ -18,6 +19,14 @@ This library facilitates the generation of PoTokens (Proof of Origin Tokens) wit
 2. If the browser requirements change in the future, `jsdom` and similar libraries may not be able to provide the necessary functionality, and thus the library may only work in web applications.
 
 3. This library does not "bypass" BotGuard. It is simply a reverse-engineered implementation of the same process that YouTube's web player uses to generate PoTokens. It is not a "crack" or "hack" of any kind.
+
+4. The library is not affiliated with Google or YouTube in any way. It is an independent project created for educational purposes. I am not responsible for any misuse of this library.
+
+## Installation
+
+```shell
+npm install bgutils-js
+```
 
 ## Usage
 
