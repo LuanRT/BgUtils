@@ -13,7 +13,7 @@
     "vite": "^3.0.0"
   },
   "dependencies": {
-    "shaka-player": "^4.3.8",
+    "shaka-player": "^4.10.10",
     "youtubei.js": "github:LuanRT/YouTube.js#do-not-merge/ump-debugging"
   }
 }

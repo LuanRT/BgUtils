@@ -2,7 +2,8 @@
   "name": "node",
   "version": "1.0.0",
   "description": "",
-  "main": "main.mjs",
+  "type": "module",
+  "main": "index.mjs",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -10,7 +11,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "youtubei.js": "github:LuanRT/YouTube.js#do-not-merge/ump-debugging",
-    "jsdom": "^24.1.1"
+    "jsdom": "^24.1.1",
+    "youtubei.js": "github:LuanRT/YouTube.js"
   }
 }

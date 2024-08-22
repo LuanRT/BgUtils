@@ -2,8 +2,7 @@ import { JSDOM } from 'jsdom';
 import { Innertube, UniversalCache, Proto, Utils } from 'youtubei.js';
 // Bun:
 // import { Innertube, UniversalCache, Proto, Utils } from 'youtubei.js/web';
-
-import { BG } from '../../src/index.mjs';
+import { BG } from '../../dist/index.js';
 
 const requestKey = 'O43z0dpjhgX20SCx4KAo';
 const visitorData = Proto.encodeVisitorData(Utils.generateRandomString(11), Math.floor(Date.now() / 1000));
@@ -39,11 +38,11 @@ const poToken = await BG.PoToken.generate({
   bgConfig
 });
 
-console.info("PoToken:", poToken);
-console.info("VisitorData:", visitorData);
+console.log("Session Info:", {
+  visitorData,
+  poToken
+})
 
-console.log('\n');
-console.log("Fetching audio streaming URL...");
 console.log('\n');
 
 const yt = await Innertube.create({

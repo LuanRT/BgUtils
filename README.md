@@ -1,27 +1,32 @@
 # What Is This?
-This library facilitates the generation of PoTokens (Proof of Origin Token) without external dependencies.
+This library facilitates the generation of PoTokens (Proof of Origin Tokens) without external dependencies. It interacts with BotGuard's API directly, avoiding unnecessary asset and script downloads. Currently, Node.js, Deno, Bun, and modern browsers are supported.
 
 - [What Is This?](#what-is-this)
-  - [Features](#features)
-  - [Caveats](#caveats)
+  - [A Few Notes](#a-few-notes)
+  - [Installation](#installation)
   - [Usage](#usage)
   - [Research](#research)
-    - [When to use a PoToken](#when-to-use-a-potoken)
     - [Initialization Process](#initialization-process)
     - [Retrieving Integrity Token](#retrieving-integrity-token)
     - [Generating a PoToken](#generating-a-potoken)
+    - [When to Use a PoToken](#when-to-use-a-potoken)
+  - [License](#license)
 
-## Features 
+## A Few Notes
 
-- **Works anywhere**: Node.js, Deno, Bun, and modern browsers are currently supported.
-- **Extremely fast**: The library directly interfaces with BotGuard's API, avoiding unnecessary asset and script downloads, making it very efficient.
-- **Lightweight**: It's less than 4KB in size!
+1. Currently, the BotGuard script needs a "good enough" `document` implementation to work. Libraries like `jsdom` can be used to provide a virtual `document`, and an example of how to do this can be found [here](./examples/node). Note that this is only necessary for Node.js, Deno, and Bun. Electron and other Chromium-based environments should work out of the box with zero dependencies.
 
-## Caveats
+2. If the browser requirements change in the future, `jsdom` and similar libraries may not be able to provide the necessary functionality, and thus the library may only work in web applications.
 
-1. Currently, the BotGuard script needs a "good enough" `document` implementation to work. Libraries like `jsdom` can be used to provide a virtual `document`, and an example of how to do this can be found [here](./examples/node). Note that this is only necessary for Node.js, Deno, and Bun. Electron and other Chromium-based environments should work out of the box with 0 dependencies.
+3. This library does not "bypass" BotGuard. It is simply a reverse-engineered implementation of the same process that YouTube's web player uses to generate PoTokens. It is not a "crack" or "hack" of any kind.
 
-2. Suppose the browser requirements change in the future. In that case, `jsdom` and similar libraries may not be able to provide the necessary functionality, and thus the library may only work in web applications.
+4. The library is not affiliated with Google or YouTube in any way. It is an independent project created for educational purposes. I am not responsible for any misuse of this library.
+
+## Installation
+
+```shell
+npm install bgutils-js
+```
 
 ## Usage
 
@@ -30,21 +35,11 @@ Please refer to the provided examples:
 
 ## Research
 
-Below is a brief overview of the process to generate a PoToken for those interested in the inner workings of the library and seeking to port it to other languages.
-
-### When to use a PoToken
-
-YouTube's web player checks the "sps" (`StreamProtectionStatus`) of each media segment request (only if using `UMP` or `SABR`; our browser example uses `UMP`) to determine if the stream needs a PoToken.
-
-- **Status 1**: The stream is either already using a PoToken or does not need one.
-- **Status 2**: The stream requires a PoToken but will allow the client to request up to 1-2MB of data before interrupting playback.
-- **Status 3**: The stream requires a PoToken and will interrupt playback immediately.
-
----
+Below is a brief overview of the process to generate a PoToken for those interested in the inner workings of the library. This information is based on my own research and may become outdated as Google updates its systems!
 
 ### Initialization Process
 
-To initialize the bg VM, we must first retrieve its script & challenge:
+To initialize the BotGuard VM, we must first retrieve its script and challenge:
 ```shell
 curl --request POST \
   --url 'https://jnn-pa.googleapis.com/$rpc/google.internal.waa.v1.Waa/Create' \
@@ -55,17 +50,24 @@ curl --request POST \
   --data '[ "requestKeyHere" ]'
 ```
 
-Once the data from the request is available, it must then be descrambled and parsed. The descrambled data should consist of a message ID, a script, the interpreter hash, a program/challenge, and the script's global name.
+Once the data from the request is available, it must be descrambled and parsed:
+```js
+// ...
+const buffer = base64ToU8(scrambledChallenge);
+const descrambled = new TextDecoder().decode(buffer.map((b) => b + 97));
+const challengeData = JSON.parse(descrambled);
+```
 
-To make the VM available in the global scope, evaluate the script. If all goes well, you should be able to access the VM from your browser or program.
+The descrambled data should consist of a message ID, a script, the interpreter hash, a program/challenge, and the script's global name. 
+
+To make the VM available in the global scope, evaluate the script. If all goes well, you should be able to access the VM from your browser or program.
 
 ### Retrieving Integrity Token
 
-This is a very important step. The Integrity Token is retrieved from an attestation server, it takes the result of the BotGuard challenge, likely to evaluate the integrity of the runtime environment.
-
-To "solve" the challenge, you must invoke BotGuard and use the program we retrieved as its first parameter.
+This is a very important step. The Integrity Token is retrieved from an attestation server and takes the result of the BotGuard challenge, likely to evaluate the integrity of the runtime environment. To "solve" the challenge, you must invoke BotGuard and use the program we retrieved as its first parameter:
 
 ```js
+// ...
 if (!vm.a)
   throw new BGError(2, "[BG]: Init failed");
 
@@ -80,23 +82,21 @@ The second parameter should point to a callback function, where BotGuard will re
 
 Once that function is available, call it with the following arguments:
 1. A callback function with one argument. This function will return the token for the attestation request.
-2. An array with 4 items. You can leave most of them as undefined/null, except for the 3rd item, point it to an array, BotGuard will fill it with one or more functions if the challenge is successfully solved.
+2. An array with four items. You can leave most of them as undefined/null, except for the third one, which should point to an array. BotGuard will fill it with one or more functions if the challenge is successfully solved.
 
 ```js
 // ...
 /** @type {string | null} */
 let botguardResponse = null;
-/** @type {Function[]} */
+/** @type {(PostProcessFunction | undefined)[]} */
 let postProcessFunctions = [];
-/** @type {string | null} */
-let integrityToken = null;
 
 await attFunctions.fn1((response) => botguardResponse = response, [, , postProcessFunctions,]);
 ```
 
 If everything was done correctly so far, you should have a token and an array with one or more functions.
 
-Now we can create the payload for the request we'll be doing next! It should consist of an array with two items, the first one should be the request key and the second one should be the token we just got:
+Now we can create the payload for the request we'll be making next. It should consist of an array with two items: the first should be the request key, and the second should be the token we just got:
   
 ```shell
 curl --request POST \
@@ -118,9 +118,9 @@ If the API call is successful, you will get a JSPB response (json+protobuf) that
 ]
 ```
 
-The first item is the integrity token, the second one is the ttl, and the third should be the refresh threshold. 
+The first item is the integrity token, the second one is the TTL (Time to Live), and the third is the refresh threshold.
 
-Store the token and the first function of the array we got earlier. We'll use them to construct the PoToken.
+Store the token and the first function from the array we got earlier. We'll use them to construct the PoToken.
 
 ### Generating a PoToken
 
@@ -135,7 +135,7 @@ if (!processIntegrityToken)
 const acquirePo = await processIntegrityToken(base64ToU8(bg.integrityToken));
 ```
 
-If this call succeeds, you should get another function. Call it with your visitor data id (or datasync id if you're signed in) as its first argument. 
+If this call succeeds, you should get another function. Call it with your visitor data ID (or datasync ID if you're signed in) as its first argument.
 ```js
 const buffer = await acquirePo(new TextEncoder().encode(identity));
 
@@ -145,4 +145,20 @@ if (poToken.length > 80)
   return poToken;
 ```
 
-The result will be a sequence of bytes, with a length of around 110-128 bytes. Base64 encode it and you'll have your PoToken!
+The result will be a sequence of bytes, with a length of around 110-128 bytes. Base64 encode it, and you'll have your PoToken!
+
+### When to Use a PoToken
+
+YouTube's web player checks the "sps" (`StreamProtectionStatus`) of each media segment request (only if using `UMP` or `SABR`; our browser example uses `UMP`) to determine if the stream needs a PoToken.
+
+- **Status 1**: The stream is either already using a PoToken or does not need one.
+- **Status 2**: The stream requires a PoToken but will allow the client to request up to 1-2MB of data before interrupting playback.
+- **Status 3**: The stream requires a PoToken and will interrupt playback immediately.
+
+## License
+
+Distributed under the [MIT](https://choosealicense.com/licenses/mit/) License.
+
+<p align="right">
+(<a href="#top">back to top</a>)
+</p>
