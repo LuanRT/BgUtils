@@ -83,9 +83,6 @@ async function getPo(identity: string): Promise<string | undefined> {
     bgConfig
   });
 
-  if (!poToken)
-    return undefined;
-
   return poToken;
 }
 
