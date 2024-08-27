@@ -42,11 +42,3 @@ export type BgConfig = {
   identity: string;
   requestKey: string;
 };
-
-// Ignores: [
-//   "**/dist/*",
-//   "**/bundle/*"
-// ],
-//   },
-// {
-//   Files: ["**/*.{js,mjs,cjs,ts}"],
