@@ -100,7 +100,7 @@ async function invokeBotguard(program: string, globalName: string, bgConfig: BgC
 
   const payload = [ requestKey, botguardResponse ];
 
-  const integrityTokenResponse = await bgConfig.fetch(new URL('/GenerateIT', BASE_URL), {
+  const integrityTokenResponse = await bgConfig.fetch(new URL('/$rpc/google.internal.waa.v1.Waa/GenerateIT', BASE_URL), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json+protobuf',

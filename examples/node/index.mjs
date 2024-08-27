@@ -11,8 +11,10 @@ const visitorData = innertube.session.context.client.visitorData;
 
 const dom = new JSDOM();
 
-globalThis.window = dom.window;
-globalThis.document = dom.window.document;
+Object.assign(globalThis, {
+  window: dom.window,
+  document: dom.window.document
+});
 
 const bgConfig = {
   fetch: (url, options) => fetch(url, options),

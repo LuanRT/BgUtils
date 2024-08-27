@@ -22,7 +22,7 @@ export async function create(bgConfig: BgConfig, interpreterHash?: string): Prom
   if (interpreterHash)
     payload.push(interpreterHash);
 
-  const response = await bgConfig.fetch(new URL('/Create', BASE_URL), {
+  const response = await bgConfig.fetch(new URL('/$rpc/google.internal.waa.v1.Waa/Create', BASE_URL), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json+protobuf',
