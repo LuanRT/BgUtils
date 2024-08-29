@@ -54,14 +54,14 @@ const metadata = document.getElementById('metadata') as HTMLDivElement;
 const loader = document.getElementById('loader') as HTMLDivElement;
 const form = document.querySelector('form') as HTMLFormElement;
 
-async function getPo(identity: string): Promise<string | undefined> {
+async function getPo(identifier: string): Promise<string | undefined> {
   const requestKey = 'O43z0dpjhgX20SCx4KAo';
 
   const bgConfig = {
     fetch: fetchFn,
     globalObj: window,
     requestKey,
-    identity
+    identifier
   };
 
   const challenge = await BG.Challenge.create(bgConfig);

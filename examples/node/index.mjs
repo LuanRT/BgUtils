@@ -19,7 +19,7 @@ Object.assign(globalThis, {
 const bgConfig = {
   fetch: (url, options) => fetch(url, options),
   globalObj: globalThis,
-  identity: visitorData,
+  identifier: visitorData,
   requestKey,
 };
 

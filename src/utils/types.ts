@@ -39,6 +39,6 @@ export type FetchFunction = typeof fetch;
 export type BgConfig = {
   fetch: FetchFunction;
   globalObj: Record<string, any>;
-  identity: string;
+  identifier: string;
   requestKey: string;
 };

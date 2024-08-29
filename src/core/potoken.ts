@@ -8,7 +8,7 @@ import type { BgConfig, BotguardResponse, PostProcessFunction, PoTokenArgs } fro
  */
 export async function generate(args: PoTokenArgs): Promise<string | undefined> {
   const { program, bgConfig, globalName } = args;
-  const { identity } = bgConfig;
+  const { identifier } = bgConfig;
 
   const bg = await invokeBotguard(program, globalName, bgConfig);
 
@@ -23,7 +23,7 @@ export async function generate(args: PoTokenArgs): Promise<string | undefined> {
     if (typeof acquirePo !== 'function')
       throw new BGError(16, 'APF:Failed');
 
-    const buffer = await acquirePo(new TextEncoder().encode(identity));
+    const buffer = await acquirePo(new TextEncoder().encode(identifier));
 
     const poToken = u8ToBase64(buffer, true);
 
