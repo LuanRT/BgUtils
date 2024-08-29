@@ -133,10 +133,10 @@ async function invokeBotguard(program: string, globalName: string, bgConfig: BgC
 
 /**
  * Creates a placeholder PoToken. This can be used while `sps` (StreamProtectionStatus) is 2, but will not work once it changes to 3.
- * @param identity - Visitor data or datasync ID.
+ * @param identifier - Visitor ID or Data Sync ID.
  */
-export function generatePlaceholder(identity: string): string {
-  if (identity.length > 118)
+export function generatePlaceholder(identifier: string): string {
+  if (identifier.length > 118)
     throw new BGError(19, 'DFO:Invalid');
 
   const currentTimeInSeconds = Math.floor(Date.now() / 1000);
@@ -151,13 +151,13 @@ export function generatePlaceholder(identity: string): string {
       currentTimeInSeconds & 255
     ]);
 
-  const result = new Uint8Array(2 + byteArray.length + identity.length);
+  const result = new Uint8Array(2 + byteArray.length + identifier.length);
 
   result[0] = 34;
-  result[1] = byteArray.length + identity.length;
+  result[1] = byteArray.length + identifier.length;
 
   result.set(byteArray, 2);
-  result.set(new TextEncoder().encode(identity), 2 + byteArray.length);
+  result.set(new TextEncoder().encode(identifier), 2 + byteArray.length);
 
   const dataArray = result.subarray(2);
 
