@@ -38,11 +38,8 @@ export async function create(bgConfig: BgConfig, interpreterHash?: string): Prom
 
   const challenge = await response.json() as unknown[];
 
-  if (challenge.length > 1 && typeof challenge[1] === 'string') {
-    const descrambledChallenge = descramble(challenge[1]);
-    if (descrambledChallenge)
-      return descrambledChallenge;
-  }
+  if (challenge.length > 1 && typeof challenge[1] === 'string')
+    return descramble(challenge[1]);
 }
 
 /**
