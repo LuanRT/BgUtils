@@ -17,7 +17,7 @@ export type DescrambledChallenge = {
    */
   script?: (string | null)[];
   /**
-   * The id of the script.
+   * The hash of the script.
    */
   interpreterHash: string;
   /**
@@ -25,7 +25,7 @@ export type DescrambledChallenge = {
    */
   globalName: string;
   /**
-   * The challenge data.
+   * The program / challenge.
    */
   challenge: string;
   /**
