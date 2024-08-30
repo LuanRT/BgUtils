@@ -1,5 +1,5 @@
 # What Is This?
-This library facilitates the creation of PoTokens. It interacts with BotGuard's API directly)
+This library facilitates the creation of PoTokens by directly interacting with BotGuard's API.
 
 
 - [What Is This?](#what-is-this)
