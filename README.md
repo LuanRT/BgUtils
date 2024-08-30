@@ -14,7 +14,7 @@ This library facilitates the creation of PoTokens by directly interacting with B
 
 ## A Few Notes
 
-1. This library does not bypass BotGuard; you still need an environment that passes its checks to use it. It is simply a reverse-engineered implementation of the same process that YouTube’s web player uses. It is not a crack or hack of any kind.
+1. This library does not bypass BotGuard; **you still need** an environment that passes its checks to use it. It is simply a reverse-engineered implementation of the same process that YouTube’s web player uses. It is not a crack or hack of any kind.
 
 2. The library is not affiliated with Google or YouTube in any way. It is an independent project created for educational purposes. I am not responsible for any misuse of this library.
 
