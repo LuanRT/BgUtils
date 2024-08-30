@@ -1,9 +1,9 @@
 # What Is This?
-This library facilitates the generation of PoTokens (Proof of Origin Tokens) without external dependencies. It interacts with BotGuard's API directly, avoiding unnecessary asset and script downloads. Currently, Node.js, Deno, Bun, and modern browsers are supported.
+This library facilitates the creation of PoTokens. It interacts with BotGuard's API directly)
+
 
 - [What Is This?](#what-is-this)
   - [A Few Notes](#a-few-notes)
-  - [Installation](#installation)
   - [Usage](#usage)
   - [Research](#research)
     - [Initialization Process](#initialization-process)
@@ -14,28 +14,17 @@ This library facilitates the generation of PoTokens (Proof of Origin Tokens) wit
 
 ## A Few Notes
 
-1. Currently, the BotGuard script needs a "good enough" `document` implementation to work. Libraries like `jsdom` can be used to provide a virtual `document`, and an example of how to do this can be found [here](./examples/node). Note that this is only necessary for Node.js, Deno, and Bun. Electron and other Chromium-based environments should work out of the box with zero dependencies.
+1. This library does not bypass BotGuard; you still need an environment that passes its checks to use it. It is simply a reverse-engineered implementation of the same process that YouTube’s web player uses. It is not a crack or hack of any kind.
 
-2. If the browser requirements change in the future, `jsdom` and similar libraries may not be able to provide the necessary functionality, and thus the library may only work in web applications.
-
-3. This library does not "bypass" BotGuard. It is simply a reverse-engineered implementation of the same process that YouTube's web player uses to generate PoTokens. It is not a "crack" or "hack" of any kind.
-
-4. The library is not affiliated with Google or YouTube in any way. It is an independent project created for educational purposes. I am not responsible for any misuse of this library.
-
-## Installation
-
-```shell
-npm install bgutils-js
-```
+2. The library is not affiliated with Google or YouTube in any way. It is an independent project created for educational purposes. I am not responsible for any misuse of this library.
 
 ## Usage
 
-Please refer to the provided examples:
-[Browsers](./examples/browser) | [Node.js, Deno, and Bun](./examples/node)
+Please refer to the provided examples [here](./examples/).
 
 ## Research
 
-Below is a brief overview of the process to generate a PoToken for those interested in the inner workings of the library. This information is based on my own research and may become outdated as Google updates its systems!
+Below is a brief overview of the process to generate a PoToken for those interested in the inner workings of the library. This information is based on my own research and may become outdated as Google updates its systems.
 
 ### Initialization Process
 
