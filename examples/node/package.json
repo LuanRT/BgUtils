@@ -12,6 +12,6 @@
   "license": "ISC",
   "dependencies": {
     "jsdom": "^24.1.1",
-    "youtubei.js": "^10.4.0"
+    "youtubei.js": "^10.5.0"
   }
 }

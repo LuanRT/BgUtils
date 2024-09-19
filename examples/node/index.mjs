@@ -1,7 +1,7 @@
 import { JSDOM } from 'jsdom';
-import { Innertube, UniversalCache, Proto, Utils } from 'youtubei.js';
+import { Innertube, UniversalCache } from 'youtubei.js';
 // Bun:
-// import { Innertube, UniversalCache, Proto, Utils } from 'youtubei.js/web';
+// import { Innertube, UniversalCache } from 'youtubei.js/web';
 import { BG } from '../../dist/index.js';
 
 let innertube = await Innertube.create({ retrieve_player: false });

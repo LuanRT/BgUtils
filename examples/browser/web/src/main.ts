@@ -1,5 +1,6 @@
 import { BG } from '../../../..';
-import { Innertube, Proto, UniversalCache, UMP, Utils, YTNodes } from 'youtubei.js/web';
+import { Innertube, ProtoUtils, UniversalCache, Utils, YTNodes } from 'youtubei.js/web';
+import GoogleVideo, { Protos } from 'googlevideo';
 
 // @ts-expect-error - x
 import shaka from 'shaka-player/dist/shaka-player.ui';
@@ -96,7 +97,7 @@ async function main() {
   //   Expiry_date: '2024-08-13T04:41:34.757Z'
   // };
 
-  const visitorData = Proto.encodeVisitorData(Utils.generateRandomString(11), Math.floor(Date.now() / 1000));
+  const visitorData = ProtoUtils.encodeVisitorData(Utils.generateRandomString(11), Math.floor(Date.now() / 1000));
   const poToken = await getPo(visitorData);
 
   let yt = await Innertube.create({
@@ -292,7 +293,7 @@ async function main() {
         player.getNetworkingEngine()?.registerResponseFilter(async (type: unknown, response: Record<string, any>) => {
           let mediaData = new Uint8Array(0);
 
-          const handleRedirect = async (redirectData: Proto.Redirect.Type) => {
+          const handleRedirect = async (redirectData: Protos.SabrRedirect) => {
             const redirectRequest = shaka.net.NetworkingEngine.makeRequest([ redirectData.url ], player!.getConfiguration().streaming.retryParameters);
             const requestOperation = player!.getNetworkingEngine()!.request(type, redirectRequest);
             const redirectResponse = await requestOperation.promise;
@@ -302,63 +303,66 @@ async function main() {
             response.uri = redirectResponse.uri;
           };
 
-          const handleMediaData = async (data: Uint8Array, multipleMD: boolean) => {
-            if (!multipleMD) {
-              mediaData = data.slice(1); // Remove header id
-            } else {
-              const newData = data.slice(1);
-              const combinedLength = mediaData.length + newData.length;
-              const tempMediaData = new Uint8Array(combinedLength);
+          const handleMediaData = async (data: Uint8Array) => {
+            const combinedLength = mediaData.length + data.length;
+            const tempMediaData = new Uint8Array(combinedLength);
 
-              tempMediaData.set(mediaData);
-              tempMediaData.set(newData, mediaData.length);
+            tempMediaData.set(mediaData);
+            tempMediaData.set(data, mediaData.length);
 
-              mediaData = tempMediaData;
-            }
+            mediaData = tempMediaData;
           };
 
           if (type == RequestType.SEGMENT) {
-            const ump = new UMP(new Uint8Array(response.data));
-            const umpParts = ump.parse();
+            const dataBuffer = new GoogleVideo.ChunkedDataBuffer([ new Uint8Array(response.data) ]);
 
-            // Check if there are multiple media data parts. If so, we need to concatenate them.
-            const multipleMD = umpParts.filter((part) => part.type === 21).length > 1;
+            const googUmp = new GoogleVideo.UMP(dataBuffer);
 
-            for (const part of umpParts) {
-              switch (part.type) {
-                case 20: {
-                  const mediaHeader = Proto.decodeMHeader(part.data);
-                  console.info('[MediaHeader]:', mediaHeader);
-                  break;
-                }
-                case 21: {
-                  handleMediaData(part.data, multipleMD);
-                  break;
-                }
-                case 43: {
-                  const sabrRedirect = Proto.decodeSABRRedirect(part.data);
-                  console.info('[SABRRedirect]:', sabrRedirect);
-                  return await handleRedirect(sabrRedirect);
-                }
-                case 58: {
-                  const streamProtectionStatus = Proto.decodeStreamProtectionStatus(part.data);
-                  switch (streamProtectionStatus.status) {
-                    case 1:
-                      console.info('[StreamProtectionStatus]: Good');
-                      break;
-                    case 2:
-                      console.error('[StreamProtectionStatus]: Attestation pending');
-                      break;
-                    case 3:
-                      console.error('[StreamProtectionStatus]: Attestation required');
-                      break;
-                    default:
-                      break;
+            let redirect: Protos.SabrRedirect | undefined;
+
+            googUmp.parse((part) => {
+              try {
+                const data = part.data.chunks[0];
+                switch (part.type) {
+                  case 20: {
+                    const mediaHeader = Protos.MediaHeader.decode(data);
+                    console.info('[MediaHeader]:', mediaHeader);
+                    break;
                   }
-                  break;
+                  case 21: {
+                    handleMediaData(part.data.split(1).remainingBuffer.chunks[0]);
+                    break;
+                  }
+                  case 43: {
+                    redirect = Protos.SabrRedirect.decode(data);
+                    console.info('[SABRRedirect]:', redirect);
+                    break;
+                  }
+                  case 58: {
+                    const streamProtectionStatus = Protos.StreamProtectionStatus.decode(data);
+                    switch (streamProtectionStatus.status) {
+                      case 1:
+                        console.info('[StreamProtectionStatus]: Good');
+                        break;
+                      case 2:
+                        console.error('[StreamProtectionStatus]: Attestation pending');
+                        break;
+                      case 3:
+                        console.error('[StreamProtectionStatus]: Attestation required');
+                        break;
+                      default:
+                        break;
+                    }
+                    break;
+                  }
                 }
+              } catch (error) {
+                console.error('An error occurred while processing the part:', error);
               }
-            }
+            });
+
+            if (redirect)
+              return handleRedirect(redirect);
 
             if (mediaData.length)
               response.data = mediaData;
