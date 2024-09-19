@@ -13,7 +13,7 @@
     "vite": "^3.0.0"
   },
   "dependencies": {
-    "googlevideo": "file:../../../../../codeberg/googlevideo",
+    "googlevideo": "github:LuanRT/googlevideo",
     "shaka-player": "^4.11.2",
     "youtubei.js": "^10.5.0"
   }
