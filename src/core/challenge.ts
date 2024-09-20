@@ -36,29 +36,40 @@ export async function create(bgConfig: BgConfig, interpreterHash?: string): Prom
   if (!response.ok)
     throw new BGError(2, `[Challenge]: Failed to fetch challenge: ${response.status}`);
 
-  const challenge = await response.json() as unknown[];
+  const rawData = await response.json() as unknown[];
 
-  if (challenge.length > 1 && typeof challenge[1] === 'string')
-    return descramble(challenge[1]);
+  return parseChallengeData(rawData);
 }
 
 /**
- * Descrambles the given challenge data and parses it into an object.
- * @param {string} scrambledChallenge - The scrambled challenge data.
+ * Parses the challenge data from the provided response data.
  */
-export function descramble(scrambledChallenge: string): DescrambledChallenge | undefined {
-  const buffer = base64ToU8(scrambledChallenge);
+export function parseChallengeData(rawData: Record<string, any>): DescrambledChallenge | undefined {
+  let challengeData: any[] = [];
 
-  if (buffer.length) {
-    const descrambled = new TextDecoder().decode(buffer.map((b) => b + 97));
-    const [ messageId, script, , interpreterHash, challenge, globalName ] = JSON.parse(descrambled);
-
-    return {
-      script,
-      interpreterHash,
-      globalName,
-      challenge,
-      messageId
-    };
+  if (rawData.length > 1 && typeof rawData[1] === 'string') {
+    const descrambled = descramble(rawData[1]);
+    challengeData = JSON.parse(descrambled || '[]');
+  } else if (rawData.length && typeof rawData[0] === 'object') {
+    challengeData = rawData[0];
   }
+
+  const [ messageId, script, , interpreterHashs, challenge, globalName ] = challengeData;
+
+  return {
+    script,
+    interpreterHash: interpreterHashs,
+    globalName,
+    challenge,
+    messageId
+  };
+}
+
+/**
+ * Descrambles the given challenge data.
+ */
+export function descramble(scrambledChallenge: string): string | undefined {
+  const buffer = base64ToU8(scrambledChallenge);
+  if (buffer.length)
+    return new TextDecoder().decode(buffer.map((b) => b + 97));
 }
