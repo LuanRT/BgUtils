@@ -42,9 +42,12 @@ const poToken = await BG.PoToken.generate({
   bgConfig
 });
 
+const placeholderPoToken = BG.PoToken.generatePlaceholder(visitorData);
+
 console.log("Session Info:", {
   visitorData,
-  poToken
+  placeholderPoToken,
+  poToken,
 })
 
 console.log('\n');
