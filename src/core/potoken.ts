@@ -23,12 +23,15 @@ export async function generate(args: PoTokenArgs): Promise<string | undefined> {
     if (typeof acquirePo !== 'function')
       throw new BGError(16, 'APF:Failed');
 
-    const buffer = await acquirePo(new TextEncoder().encode(identifier));
+    const result = await acquirePo(new TextEncoder().encode(identifier));
 
-    const poToken = u8ToBase64(buffer, true);
+    if (!result)
+      throw new BGError(17, 'YNJ:Undefined'); 
 
-    if (poToken.length > 80)
-      return poToken;
+    if (!(result instanceof Uint8Array))
+      throw new BGError(18, 'ODM:Invalid');
+
+    return u8ToBase64(result, true);
   }
 }
 
