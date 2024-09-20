@@ -26,7 +26,7 @@ export async function generate(args: PoTokenArgs): Promise<string | undefined> {
     const result = await acquirePo(new TextEncoder().encode(identifier));
 
     if (!result)
-      throw new BGError(17, 'YNJ:Undefined'); 
+      throw new BGError(17, 'YNJ:Undefined');
 
     if (!(result instanceof Uint8Array))
       throw new BGError(18, 'ODM:Invalid');
@@ -138,35 +138,90 @@ async function invokeBotguard(program: string, globalName: string, bgConfig: BgC
  * Creates a placeholder PoToken. This can be used while `sps` (StreamProtectionStatus) is 2, but will not work once it changes to 3.
  * @param identifier - Visitor ID or Data Sync ID.
  */
-export function generatePlaceholder(identifier: string): string {
-  if (identifier.length > 118)
+export function generatePlaceholder(identifier: string, clientState?: number): string {
+  const encodedIdentifier = new TextEncoder().encode(identifier);
+
+  if (encodedIdentifier.length > 118)
     throw new BGError(19, 'DFO:Invalid');
 
-  const currentTimeInSeconds = Math.floor(Date.now() / 1000);
-  const randomValues = [ Math.random() * 255, Math.random() * 255 ];
+  const timestamp = Math.floor(Date.now() / 1000);
+  const randomKeys = [ Math.floor(Math.random() * 256), Math.floor(Math.random() * 256) ];
 
-  const byteArray = randomValues
-    .concat([ 0, 3 ])
-    .concat([
-      (currentTimeInSeconds >> 24) & 255,
-      (currentTimeInSeconds >> 16) & 255,
-      (currentTimeInSeconds >> 8) & 255,
-      currentTimeInSeconds & 255
-    ]);
+  // NOTE: The "0" value before the client state is supposed to be someVal & 0xFF.
+  // It is always 0 though, so I didn't bother investigating further.
+  const header = randomKeys.concat(
+    [
+      0, (clientState ?? 1)
+    ],
+    [
+      (timestamp >> 24) & 0xFF,
+      (timestamp >> 16) & 0xFF,
+      (timestamp >> 8) & 0xFF,
+      timestamp & 0xFF
+    ]
+  );
 
-  const result = new Uint8Array(2 + byteArray.length + identifier.length);
+  const packet = new Uint8Array(2 + header.length + encodedIdentifier.length);
 
-  result[0] = 34;
-  result[1] = byteArray.length + identifier.length;
+  packet[0] = 34;
+  packet[1] = header.length + encodedIdentifier.length;
 
-  result.set(byteArray, 2);
-  result.set(new TextEncoder().encode(identifier), 2 + byteArray.length);
+  packet.set(header, 2);
+  packet.set(encodedIdentifier, 2 + header.length);
 
-  const dataArray = result.subarray(2);
+  const payload = packet.subarray(2);
 
-  for (let i = randomValues.length; i < dataArray.length; ++i) {
-    dataArray[i] ^= dataArray[i % randomValues.length];
+  const keyLength = randomKeys.length;
+
+  for (let i = keyLength; i < payload.length; i++) {
+    payload[i] ^= payload[i % keyLength];
   }
 
-  return u8ToBase64(result);
+  return u8ToBase64(packet);
+}
+
+/**
+ * Decodes a placeholder potoken string into its components.
+ * @param placeholder - The placeholder potoken to decode.
+ * @throws Error if the packet length is invalid.
+ */
+export function decodePlaceholder(placeholder: string) {
+  const packet = base64ToU8(placeholder);
+
+  const payloadLength = packet[1];
+  const totalPacketLength = 2 + payloadLength;
+
+  if (packet.length !== totalPacketLength)
+    throw new Error('Invalid packet length.');
+
+  const payload = packet.subarray(2);
+
+  // Decrypt the payload by reversing the XOR operation
+  const keyLength = 2;
+  for (let i = keyLength; i < payload.length; ++i) {
+    payload[i] ^= payload[i % keyLength];
+  }
+
+  const keys = [ payload[0], payload[1] ];
+
+  const unknownVal = payload[2]; // The masked property I mentioned in the function above
+  const clientState = payload[3];
+
+  const timestamp =
+    (payload[4] << 24) |
+    (payload[5] << 16) |
+    (payload[6] << 8) |
+    payload[7];
+
+  const date = new Date(timestamp * 1000);
+  const identifier = new TextDecoder().decode(payload.subarray(8));
+
+  return {
+    identifier,
+    timestamp,
+    unknownVal,
+    clientState,
+    keys,
+    date
+  };
 }
