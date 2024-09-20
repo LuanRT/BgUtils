@@ -54,11 +54,11 @@ export function parseChallengeData(rawData: Record<string, any>): DescrambledCha
     challengeData = rawData[0];
   }
 
-  const [ messageId, script, , interpreterHashs, challenge, globalName ] = challengeData;
+  const [ messageId, script, , interpreterHash, challenge, globalName ] = challengeData;
 
   return {
     script,
-    interpreterHash: interpreterHashs,
+    interpreterHash,
     globalName,
     challenge,
     messageId
