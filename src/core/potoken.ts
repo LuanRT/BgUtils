@@ -177,7 +177,7 @@ export function generatePlaceholder(identifier: string, clientState?: number): s
     payload[i] ^= payload[i % keyLength];
   }
 
-  return u8ToBase64(packet);
+  return u8ToBase64(packet, true);
 }
 
 /**
