@@ -47,7 +47,7 @@ const descrambled = new TextDecoder().decode(buffer.map((b) => b + 97));
 const challengeData = JSON.parse(descrambled);
 ```
 
-The descrambled data should consist of a message ID, a script, the interpreter hash, a program/challenge, and the script's global name. 
+The descrambled data should consist of a message ID, the interpreter javascript, the interpreter hash, a program, and the script's global name. 
 
 To make the VM available in the global scope, evaluate the script. If all goes well, you should be able to access the VM from your browser or program.
 

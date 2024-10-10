@@ -23,22 +23,20 @@ const bgConfig = {
   requestKey,
 };
 
-const challenge = await BG.Challenge.create(bgConfig);
+const bgChallenge = await BG.Challenge.create(bgConfig);
 
-if (!challenge)
+if (!bgChallenge)
   throw new Error('Could not get challenge');
 
-if (challenge.script) {
-  const script = challenge.script.find((sc) => sc !== null);
-  if (script)
-    new Function(script)();
-} else {
-  console.warn('Unable to load Botguard.');
-}
+const interpreterJavascript = bgChallenge.interpreterJavascript.privateDoNotAccessOrElseSafeScriptWrappedValue;
 
-const poToken = await BG.PoToken.generate({
-  program: challenge.challenge,
-  globalName: challenge.globalName,
+if (interpreterJavascript) {
+    new Function(interpreterJavascript)();
+} else throw new Error('Could not load VM');
+
+const poTokenResult = await BG.PoToken.generate({
+  program: bgChallenge.program,
+  globalName: bgChallenge.globalName,
   bgConfig
 });
 
@@ -47,13 +45,14 @@ const placeholderPoToken = BG.PoToken.generatePlaceholder(visitorData);
 console.log("Session Info:", {
   visitorData,
   placeholderPoToken,
-  poToken,
-})
+  poToken: poTokenResult.poToken,
+  mintRefreshDate: new Date((Date.now() + poTokenResult.integrityTokenData.estimatedTtlSecs * 1000) - (poTokenResult.integrityTokenData.mintRefreshThreshold * 1000)),
+});
 
 console.log('\n');
 
 innertube = await Innertube.create({
-  po_token: poToken,
+  po_token: poTokenResult.poToken,
   visitor_data: visitorData,
   cache: new UniversalCache(),
   generate_session_locally: true,

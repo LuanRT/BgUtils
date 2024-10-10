@@ -54,14 +54,19 @@ export function parseChallengeData(rawData: Record<string, any>): DescrambledCha
     challengeData = rawData[0];
   }
 
-  const [ messageId, script, , interpreterHash, challenge, globalName ] = challengeData;
+  const [ messageId, wrappedScript, , interpreterHash, program, globalName, , clientExperimentsStateBlob ] = challengeData;
+
+  const privateDoNotAccessOrElseSafeScriptWrappedValue = Array.isArray(wrappedScript) ? wrappedScript.find((value) => value && typeof value === 'string') : null;
 
   return {
-    script,
+    messageId,
+    interpreterJavascript: {
+      privateDoNotAccessOrElseSafeScriptWrappedValue
+    },
     interpreterHash,
+    program,
     globalName,
-    challenge,
-    messageId
+    clientExperimentsStateBlob
   };
 }
 

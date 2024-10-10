@@ -1,24 +1,24 @@
 import { BASE_URL, GOOG_API_KEY, USER_AGENT } from '../utils/index.js';
 import { u8ToBase64, base64ToU8, BGError } from '../utils/index.js';
-import type { BgConfig, BotguardResponse, PostProcessFunction, PoTokenArgs } from '../utils/index.js';
+import type { BgConfig, BotguardResponse, PostProcessFunction, PoTokenArgs, PoTokenResult } from '../utils/index.js';
 
 /**
  * Generates a Proof of Origin Token.
  * @param args - The arguments for generating the token.
  */
-export async function generate(args: PoTokenArgs): Promise<string | undefined> {
+export async function generate(args: PoTokenArgs): Promise<PoTokenResult> {
   const { program, bgConfig, globalName } = args;
   const { identifier } = bgConfig;
 
-  const bg = await invokeBotguard(program, globalName, bgConfig);
+  const bgResult = await invokeBotguard(program, globalName, bgConfig);
 
-  if (bg.postProcessFunctions.length) {
-    const processIntegrityToken = bg.postProcessFunctions[0];
+  if (bgResult.postProcessFunctions.length) {
+    const processIntegrityToken = bgResult.postProcessFunctions[0];
 
     if (!processIntegrityToken)
       throw new BGError(4, 'PMD:Undefined');
 
-    const acquirePo = await processIntegrityToken(base64ToU8(bg.integrityToken));
+    const acquirePo = await processIntegrityToken(base64ToU8(bgResult.integrityTokenData.integrityToken ?? bgResult.integrityTokenData.websafeFallbackToken ?? ''));
 
     if (typeof acquirePo !== 'function')
       throw new BGError(16, 'APF:Failed');
@@ -31,8 +31,13 @@ export async function generate(args: PoTokenArgs): Promise<string | undefined> {
     if (!(result instanceof Uint8Array))
       throw new BGError(18, 'ODM:Invalid');
 
-    return u8ToBase64(result, true);
+    return {
+      poToken: u8ToBase64(result, true),
+      integrityTokenData: bgResult.integrityTokenData
+    };
   }
+
+  throw new BGError(0, '[BG]: Failed to process integrity token data');
 }
 
 type AttFunctions = {
@@ -65,7 +70,7 @@ async function invokeBotguard(program: string, globalName: string, bgConfig: BgC
 
   const attFunctions: AttFunctions = {};
 
-  const attFunctionsCallback = (
+  const setAttFunctions = (
     fn1: AttFunctions['fn1'],
     fn2: AttFunctions['fn2'],
     fn3: AttFunctions['fn3'],
@@ -78,13 +83,13 @@ async function invokeBotguard(program: string, globalName: string, bgConfig: BgC
     throw new BGError(2, '[BG]: Init failed');
 
   try {
-    await vm.a(program, attFunctionsCallback, true, undefined, () => {/** No-op */ });
+    await vm.a(program, setAttFunctions, true, undefined, () => {/** no-op */ });
   } catch (err: unknown) {
     throw new BGError(3, `[BG]: Failed to load program: ${(err as Error).message}`);
   }
 
   if (!attFunctions.fn1)
-    throw new BGError(4, '[BG]: Att function 1 unavailable. Cannot proceed.');
+    throw new BGError(4, '[BG]: Att function unavailable. Cannot proceed.');
 
   let botguardResponse: string | undefined;
 
@@ -123,13 +128,27 @@ async function invokeBotguard(program: string, globalName: string, bgConfig: BgC
   if (!integrityTokenData.length)
     throw new BGError(8, '[GenerateIT]: No integrity token data received');
 
-  const integrityToken = integrityTokenData[0];
+  const [ integrityToken, estimatedTtlSecs, mintRefreshThreshold, websafeFallbackToken ] = integrityTokenData;
 
-  if (typeof integrityToken !== 'string')
-    throw new BGError(9, `[GenerateIT]: Expected integrity token to be a string but got ${typeof integrityToken}`);
+  if (integrityToken !== undefined && typeof integrityToken !== 'string')
+    throw new BGError(9, '[GenerateIT]: Invalid integrity token');
+
+  if (estimatedTtlSecs !== undefined && typeof estimatedTtlSecs !== 'number')
+    throw new BGError(10, '[GenerateIT]: Invalid TTL');
+
+  if (mintRefreshThreshold !== undefined && typeof mintRefreshThreshold !== 'number')
+    throw new BGError(11, '[GenerateIT]: Invalid mint refresh threshold');
+
+  if (websafeFallbackToken !== undefined && typeof websafeFallbackToken !== 'string')
+    throw new BGError(12, '[GenerateIT]: Invalid websafe fallback token');
 
   return {
-    integrityToken,
+    integrityTokenData: {
+      integrityToken,
+      estimatedTtlSecs,
+      mintRefreshThreshold,
+      websafeFallbackToken
+    },
     postProcessFunctions
   };
 }
