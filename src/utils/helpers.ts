@@ -1,3 +1,5 @@
+import { GOOG_BASE_URL, YT_BASE_URL } from './constants.js';
+
 const base64urlCharRegex = /[-_.]/g;
 
 const base64urlToBase64Map = {
@@ -40,12 +42,6 @@ export function u8ToBase64(u8: Uint8Array, base64url = false): string {
   return result;
 }
 
-export class BGError {
-  public code: number;
-  public message: string;
-
-  constructor(code: number, message: string) {
-    this.code = code;
-    this.message = message;
-  }
-}
+export function buildURL(endpointName: string, useYouTubeAPI?: boolean): string {
+  return `${useYouTubeAPI ? YT_BASE_URL : GOOG_BASE_URL}/${useYouTubeAPI ? 'api/jnn/v1' : '$rpc/google.internal.waa.v1.Waa'}/${endpointName}`;
+} 

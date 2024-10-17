@@ -1,4 +1,4 @@
-import { BGError, base64ToU8, BASE_URL, GOOG_API_KEY, USER_AGENT } from '../utils/index.js';
+import { base64ToU8, buildURL, GOOG_API_KEY } from '../utils/index.js';
 import type { DescrambledChallenge, BgConfig } from '../utils/index.js';
 
 /**
@@ -11,30 +11,26 @@ import type { DescrambledChallenge, BgConfig } from '../utils/index.js';
 export async function create(bgConfig: BgConfig, interpreterHash?: string): Promise<DescrambledChallenge | undefined> {
   const requestKey = bgConfig.requestKey;
 
-  if (!requestKey)
-    throw new BGError(0, '[Challenge]: Request key not provided');
-
   if (!bgConfig.fetch)
-    throw new BGError(1, '[Challenge]: Fetch function not provided');
+    throw new Error('[Challenge]: Fetch function not provided');
 
   const payload = [ requestKey ];
 
   if (interpreterHash)
     payload.push(interpreterHash);
 
-  const response = await bgConfig.fetch(new URL('/$rpc/google.internal.waa.v1.Waa/Create', BASE_URL), {
+  const response = await bgConfig.fetch(buildURL('Create', bgConfig.useYouTubeAPI), {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/json+protobuf',
-      'User-Agent': USER_AGENT,
-      'X-Goog-Api-Key': GOOG_API_KEY,
-      'X-User-Agent': 'grpc-web-javascript/0.1'
+      'content-type': 'application/json+protobuf',
+      'x-goog-api-key': GOOG_API_KEY,
+      'x-user-agent': 'grpc-web-javascript/0.1'
     },
     body: JSON.stringify(payload)
   });
 
   if (!response.ok)
-    throw new BGError(2, `[Challenge]: Failed to fetch challenge: ${response.status}`);
+    throw new Error(`[Challenge]: Failed to fetch challenge: ${response.status}`);
 
   const rawData = await response.json() as unknown[];
 
@@ -54,14 +50,16 @@ export function parseChallengeData(rawData: Record<string, any>): DescrambledCha
     challengeData = rawData[0];
   }
 
-  const [ messageId, wrappedScript, , interpreterHash, program, globalName, , clientExperimentsStateBlob ] = challengeData;
+  const [ messageId, wrappedScript, wrappedUrl, interpreterHash, program, globalName, , clientExperimentsStateBlob ] = challengeData;
 
   const privateDoNotAccessOrElseSafeScriptWrappedValue = Array.isArray(wrappedScript) ? wrappedScript.find((value) => value && typeof value === 'string') : null;
+  const privateDoNotAccessOrElseTrustedResourceUrlWrappedValue = Array.isArray(wrappedUrl) ? wrappedUrl.find((value) => value && typeof value === 'string') : null;
 
   return {
     messageId,
     interpreterJavascript: {
-      privateDoNotAccessOrElseSafeScriptWrappedValue
+      privateDoNotAccessOrElseSafeScriptWrappedValue,
+      privateDoNotAccessOrElseTrustedResourceUrlWrappedValue
     },
     interpreterHash,
     program,
