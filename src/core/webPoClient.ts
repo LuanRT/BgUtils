@@ -1,5 +1,5 @@
 import BotGuardClient from './botGuardClient.js';
-import { WebPoMinter } from './webPoMinter.js';
+import WebPoMinter from './webPoMinter.js';
 import { GOOG_API_KEY } from '../utils/constants.js';
 import { base64ToU8, buildURL, u8ToBase64 } from '../utils/helpers.js';
 import type { PoTokenArgs, PoTokenResult, WebPoSignalOutput } from '../utils/types.js';
