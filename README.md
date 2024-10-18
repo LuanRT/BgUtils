@@ -28,18 +28,17 @@ Below is a brief overview of the process to generate a PoToken for those interes
 
 ### Initialization Process
 
-To initialize the BotGuard VM, we must first retrieve its script and challenge:
+First, retrieve the VM's script and program:
 ```shell
 curl --request POST \
   --url 'https://jnn-pa.googleapis.com/$rpc/google.internal.waa.v1.Waa/Create' \
   --header 'Content-Type: application/json+protobuf' \
-  --header 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36(KHTML, like Gecko)' \
   --header 'x-goog-api-key: AIzaSyDyT5W0Jh49F30Pqqtyfdf7pDLFKLJoAnw' \
   --header 'x-user-agent: grpc-web-javascript/0.1' \
   --data '[ "requestKeyHere" ]'
 ```
 
-Once the data from the request is available, it must be descrambled and parsed:
+Once the response data is available, it must be descrambled and parsed:
 ```js
 // ...
 const buffer = base64ToU8(scrambledChallenge);
@@ -47,58 +46,98 @@ const descrambled = new TextDecoder().decode(buffer.map((b) => b + 97));
 const challengeData = JSON.parse(descrambled);
 ```
 
-The descrambled data should consist of a message ID, the interpreter javascript, the interpreter hash, a program, and the script's global name. 
+The descrambled data should consist of a message ID, the interpreter JavaScript, the interpreter hash, a program, and the script's global name.
 
-To make the VM available in the global scope, evaluate the script. If all goes well, you should be able to access the VM from your browser or program.
+To make the VM available, evaluate the script: 
+```js
+const interpreterJavascript = bgChallenge.interpreterJavascript.privateDoNotAccessOrElseSafeScriptWrappedValue;
+
+if (interpreterJavascript) {
+    new Function(interpreterJavascript)();
+} else throw new Error('Could not load VM');
+```
+
+If everything goes well, you should be able to access it like so:
+```js
+const globalObject = window || globalThis;
+console.log(globalObject[challengeData.globalName]);
+```
 
 ### Retrieving Integrity Token
 
-This is a very important step. The Integrity Token is retrieved from an attestation server and takes the result of the BotGuard challenge, likely to evaluate the integrity of the runtime environment. To "solve" the challenge, you must invoke BotGuard and use the program we retrieved as its first parameter:
+This is a crucial step. The Integrity Token is retrieved from an attestation server and relies on the result of the BotGuard challenge, likely to assess the integrity of the runtime environment. To "solve" this challenge, you need to invoke BotGuard and pass the retrieved program as its first argument.
 
 ```js
 // ...
-if (!vm.a)
-  throw new BGError(2, "[BG]: Init failed");
+if (!this.vm)
+  throw new Error('[BotGuardClient]: VM not found in the global object');
+
+if (!this.vm.a)
+  throw new Error('[BotGuardClient]: Could not load program');
+
+const vmFunctionsCallback = (
+  asyncSnapshotFunction,
+  shutdownFunction,
+  passEventFunction,
+  checkCameraFunction
+) => {
+  Object.assign(this.vmFunctions, { asyncSnapshotFunction, shutdownFunction, passEventFunction, checkCameraFunction });
+};
 
 try {
-  await vm.a(program, attFunctionsCallback, true, undefined, () => {/** no-op */ });
-} catch (err) {
-  throw new BGError(3, `[BG]: Failed to load program: ${err.message}`);
+  this.syncSnapshotFunction = await this.vm.a(this.program, vmFunctionsCallback, true, undefined, () => { /** no-op */ }, [ [], [] ])[0];
+} catch (error) {
+  throw new Error(`[BotGuardClient]: Failed to load program (${(error as Error).message})`);
 }
 ```
 
-The second parameter should point to a callback function, where BotGuard will return another function that will later be used to retrieve the payload for the integrity token request.
+The second parameter should be a callback function, where BotGuard will return several functions. In our case, we are mainly interested in `asyncSnapshotFunction`.
 
-Once that function is available, call it with the following arguments:
-1. A callback function with one argument. This function will return the token for the attestation request.
-2. An array with four items. You can leave most of them as undefined/null, except for the third one, which should point to an array. BotGuard will fill it with one or more functions if the challenge is successfully solved.
+Once `asyncSnapshotFunction` is available, call it with the following arguments:
+1. A callback function that takes a single argument. This function will return the token for the attestation request.
+2. An array with four elements:
+    - 1st: `contentBinding` (Optional).
+    - 2nd: `signedTimestamp` (Optional).
+    - 3rd: `webPoSignalOutput` (Optional but required for our case, BotGuard will fill this array with a function to get a PoToken minter).
+    - 4th: `skipPrivacyBuffer` (Optional, not sure what this one is/does).
 
 ```js
-// ...
-/** @type {string | null} */
-let botguardResponse = null;
-/** @type {(PostProcessFunction | undefined)[]} */
-let postProcessFunctions = [];
+async snapshot(args) {
+  return new Promise((resolve, reject) => {
+    if (!this.vmFunctions.asyncSnapshotFunction)
+      return reject(new Error('[BotGuardClient]: Async snapshot function not found'));
 
-await attFunctions.fn1((response) => botguardResponse = response, [, , postProcessFunctions,]);
+    this.vmFunctions.asyncSnapshotFunction((response) => resolve(response), [
+      args.contentBinding,
+      args.signedTimestamp,
+      args.webPoSignalOutput,
+      args.skipPrivacyBuffer
+    ]);
+  });
+}
 ```
 
-If everything was done correctly so far, you should have a token and an array with one or more functions.
+Then:
+```js
+const webPoSignalOutput = [];
+const botguardResponse = await snapshot({ webPoSignalOutput });
+```
 
-Now we can create the payload for the request we'll be making next. It should consist of an array with two items: the first should be the request key, and the second should be the token we just got:
-  
+If everything was done correctly, you should have a token and an array with one or more functions.
+
+Now we can create the payload for the Integrity Token request. It should be an array of two items: the request key and the token.
+
 ```shell
 curl --request POST \
   --url 'https://jnn-pa.googleapis.com/$rpc/google.internal.waa.v1.Waa/GenerateIT' \
   --header 'Accept: application/json' \
   --header 'Content-Type: application/json+protobuf' \
-  --header 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36(KHTML, like Gecko)' \
   --header 'x-goog-api-key: AIzaSyDyT5W0Jh49F30Pqqtyfdf7pDLFKLJoAnw' \
   --header 'x-user-agent: grpc-web-javascript/0.1' \
-  --data '[ "requestKeyHere", "$abcdeyourtokenhere" ]'
+  --data '[ "requestKeyHere", "$abcdeyourbotguardtokenhere" ]'
 ```
 
-If the API call is successful, you will get a JSPB response (json+protobuf) that looks like this:
+If the API call is successful, you will receive a JSPB (json+protobuf) response that looks like this:
 ```json
 [
   "azXvdvYQKz8ff4h9PjIlQI7JUOTtYnBdXEGs4bmQb8FvmFB+oosILg6flcoDfzFpwas/hitYcUzx3Qm+DFtQ9slN",
@@ -107,41 +146,48 @@ If the API call is successful, you will get a JSPB response (json+protobuf) that
 ]
 ```
 
-The first item is the integrity token, the second one is the TTL (Time to Live), and the third is the refresh threshold.
+The first item is the Integrity Token, the second is the TTL (Time to Live), and the third is the refresh threshold.
 
-Store the token and the first function from the array we got earlier. We'll use them to construct the PoToken.
+Store the token and the array we obtained earlier. We'll use them to construct the PoToken.
 
 ### Generating a PoToken
 
-First, call the function from the last step using the integrity token (in bytes) as an argument.
+Call the first function in the `webPoSignalOutput` array with the Integrity Token (in bytes) as an argument:
 
 ```js
-const processIntegrityToken = bg.postProcessFunctions[0];
+const getMinter = webPoSignalOutput[0];
 
-if (!processIntegrityToken)
-  throw new BGError(4, "PMD:Undefined");
+if (!getMinter)
+  throw new Error('PMD:Undefined');
 
-const acquirePo = await processIntegrityToken(base64ToU8(bg.integrityToken));
+const mintCallback = await getMinter(base64ToU8(integrityTokenResponse.integrityToken ?? ''));
+
+if (!(mintCallback instanceof Function))
+  throw new Error('APF:Failed');
 ```
 
-If this call succeeds, you should get another function. Call it with your Visitor ID (or Data Sync ID if you're signed in) as its first argument.
+If successful, you'll receive a function to mint PoTokens. Call it with your Visitor ID (or Data Sync ID if you're signed in) as an argument:
 ```js
-const buffer = await acquirePo(new TextEncoder().encode(identifier));
+const result = await mintCallback(new TextEncoder().encode(identifier));
 
-const poToken = u8ToBase64(buffer, true);
+if (!result)
+  throw new Error('YNJ:Undefined');
 
-if (poToken.length > 80)
-  return poToken;
+if (!(result instanceof Uint8Array))
+  throw new Error('ODM:Invalid');
+
+const poToken = u8ToBase64(result, true);
+console.log(poToken);
 ```
 
-The result will be a sequence of bytes, with a length of around 110-128 bytes. Base64 encode it, and you'll have your PoToken!
+The result will be a sequence of bytes, about 110–128 bytes in length. Base64 encode it, and you'll have a PoToken!
 
 ### When to Use a PoToken
 
 YouTube's web player checks the "sps" (`StreamProtectionStatus`) of each media segment request (only if using `UMP` or `SABR`; our browser example uses `UMP`) to determine if the stream needs a PoToken.
 
 - **Status 1**: The stream is either already using a PoToken or does not need one.
-- **Status 2**: The stream requires a PoToken but will allow the client to request up to 1-2MB of data before interrupting playback.
+- **Status 2**: The stream requires a PoToken but will allow the client to request up to 1-2 MB of data before interrupting playback.
 - **Status 3**: The stream requires a PoToken and will interrupt playback immediately.
 
 ## License
