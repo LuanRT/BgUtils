@@ -3,5 +3,5 @@
 ```shell
 cd examples/node
 npm install
-node .
+npx tsx .
 ```

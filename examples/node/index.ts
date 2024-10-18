@@ -1,13 +1,18 @@
+import { BG } from '../../dist/index.js';
+import type { BgConfig } from '../../dist/index.js';
 import { JSDOM } from 'jsdom';
-import { Innertube, UniversalCache } from 'youtubei.js';
 // Bun:
 // import { Innertube, UniversalCache } from 'youtubei.js/web';
-import { BG } from '../../dist/index.js';
+import { Innertube, UniversalCache } from 'youtubei.js';
 
+// Create a barebones Innertube instance so we can get a visitor data string from YouTube.
 let innertube = await Innertube.create({ retrieve_player: false });
 
 const requestKey = 'O43z0dpjhgX20SCx4KAo';
 const visitorData = innertube.session.context.client.visitorData;
+
+if (!visitorData)
+  throw new Error('Could not get visitor data');
 
 const dom = new JSDOM();
 
@@ -16,11 +21,11 @@ Object.assign(globalThis, {
   document: dom.window.document
 });
 
-const bgConfig = {
-  fetch: (url, options) => fetch(url, options),
+const bgConfig: BgConfig = {
+  fetch: (input: string | URL | globalThis.Request, init?: RequestInit) => fetch(input, init), 
   globalObj: globalThis,
   identifier: visitorData,
-  requestKey,
+  requestKey
 };
 
 const bgChallenge = await BG.Challenge.create(bgConfig);
@@ -31,7 +36,7 @@ if (!bgChallenge)
 const interpreterJavascript = bgChallenge.interpreterJavascript.privateDoNotAccessOrElseSafeScriptWrappedValue;
 
 if (interpreterJavascript) {
-    new Function(interpreterJavascript)();
+  new Function(interpreterJavascript)();
 } else throw new Error('Could not load VM');
 
 const poTokenResult = await BG.PoToken.generate({
@@ -42,23 +47,24 @@ const poTokenResult = await BG.PoToken.generate({
 
 const placeholderPoToken = BG.PoToken.generatePlaceholder(visitorData);
 
-console.log("Session Info:", {
+console.info('Session Info:', {
   visitorData,
   placeholderPoToken,
   poToken: poTokenResult.poToken,
-  mintRefreshDate: new Date((Date.now() + poTokenResult.integrityTokenData.estimatedTtlSecs * 1000) - (poTokenResult.integrityTokenData.mintRefreshThreshold * 1000)),
+  integrityTokenData: poTokenResult.integrityTokenData
 });
-
-console.log('\n');
 
 innertube = await Innertube.create({
   po_token: poTokenResult.poToken,
   visitor_data: visitorData,
-  cache: new UniversalCache(),
-  generate_session_locally: true,
+  cache: new UniversalCache(true),
+  generate_session_locally: true
 });
 
 const info = await innertube.getBasicInfo('FeqhtDOhX6Y');
-const audioStreamingURL = info.chooseFormat({ quality: 'best', type: 'audio' }).decipher(innertube.session.player);
+const audioStreamingURL = info.chooseFormat({
+  quality: 'best',
+  type: 'audio'
+}).decipher(innertube.session.player);
 
-console.info("Streaming URL:", audioStreamingURL);
+console.info('Streaming URL:', audioStreamingURL);

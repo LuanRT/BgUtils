@@ -3,13 +3,17 @@
   "version": "1.0.0",
   "description": "",
   "type": "module",
-  "main": "index.mjs",
+  "main": "./index.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
+  "devDependencies": {
+    "@types/jsdom": "^21.1.7",
+    "typescript": "^4.6.4"
+  },
   "dependencies": {
     "jsdom": "^24.1.1",
     "youtubei.js": "^10.5.0"
