@@ -21,6 +21,6 @@
     "skipLibCheck": true
   },
   "include": [
-    "index.ts"
+    "*.ts"
   ]
 }

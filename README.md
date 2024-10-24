@@ -8,7 +8,7 @@ This library facilitates the creation of PoTokens by directly interacting with B
   - [Research](#research)
     - [Initialization Process](#initialization-process)
     - [Retrieving Integrity Token](#retrieving-integrity-token)
-    - [Generating a PoToken](#generating-a-potoken)
+    - [Minting WebPo Tokens](#minting-webpo-tokens)
     - [When to Use a PoToken](#when-to-use-a-potoken)
   - [License](#license)
 
@@ -150,7 +150,7 @@ The first item is the Integrity Token, the second is the TTL (Time to Live), and
 
 Store the token and the array we obtained earlier. We'll use them to construct the PoToken.
 
-### Generating a PoToken
+### Minting WebPo Tokens
 
 Call the first function in the `webPoSignalOutput` array with the Integrity Token (in bytes) as an argument:
 
