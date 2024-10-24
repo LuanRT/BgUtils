@@ -91,4 +91,6 @@ const audioStreamingURL = info.chooseFormat({
   type: 'audio'
 }).decipher(innertube.session.player);
 
+console.info('Visitor data:', visitorData, '\n');
+console.info('PoToken:', poToken, '\n');
 console.info('Streaming URL:', audioStreamingURL);
