@@ -13,7 +13,7 @@
     "vite": "^5.4.7"
   },
   "dependencies": {
-    "googlevideo": "github:LuanRT/googlevideo",
+    "googlevideo": "^1.1.0",
     "shaka-player": "^4.11.2",
     "youtubei.js": "^10.5.0"
   }
