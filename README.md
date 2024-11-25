@@ -65,7 +65,7 @@ console.log(globalObject[challengeData.globalName]);
 
 ### Retrieving Integrity Token
 
-This is a crucial step. The Integrity Token is retrieved from an attestation server and relies on the result of the BotGuard challenge, likely to assess the integrity of the runtime environment. To "solve" this challenge, you need to invoke BotGuard and pass the retrieved program as its first argument.
+This is an important step. The integrity token is retrieved from an attestation server and relies on the BotGuard result, likely to assess the integrity of the runtime environment. To "solve" this challenge, you need to invoke BotGuard and pass the retrieved program as its first argument.
 
 ```js
 // ...
@@ -102,7 +102,7 @@ Once `asyncSnapshotFunction` is available, call it with the following arguments:
     - 4th: `skipPrivacyBuffer` (Optional, not sure what this one is/does).
 
 ```js
-async snapshot(args) {
+async function snapshot(args) {
   return new Promise((resolve, reject) => {
     if (!this.vmFunctions.asyncSnapshotFunction)
       return reject(new Error('[BotGuardClient]: Async snapshot function not found'));
@@ -125,7 +125,7 @@ const botguardResponse = await snapshot({ webPoSignalOutput });
 
 If everything was done correctly, you should have a token and an array with one or more functions.
 
-Now we can create the payload for the Integrity Token request. It should be an array of two items: the request key and the token.
+Now we can create the payload for the integrity token request. It should be an array of two items: the request key and the token.
 
 ```shell
 curl --request POST \
