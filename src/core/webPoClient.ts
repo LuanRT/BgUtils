@@ -1,8 +1,7 @@
 import BotGuardClient from './botGuardClient.js';
 import WebPoMinter from './webPoMinter.js';
-import { GOOG_API_KEY } from '../utils/constants.js';
-import { base64ToU8, buildURL, u8ToBase64 } from '../utils/helpers.js';
-import type { PoTokenArgs, PoTokenResult, WebPoSignalOutput } from '../utils/types.js';
+import { GOOG_API_KEY, base64ToU8, buildURL, u8ToBase64 } from '../utils/index.js';
+import type { PoTokenArgs, PoTokenResult, WebPoSignalOutput } from '../utils/index.js';
 
 /**
  * Generates a Proof of Origin Token.
@@ -16,7 +15,7 @@ export async function generate(args: PoTokenArgs): Promise<PoTokenResult> {
 
   const webPoSignalOutput: WebPoSignalOutput = [];
   const botguardResponse = await botguard.snapshot({ webPoSignalOutput });
-
+ 
   const payload = [ bgConfig.requestKey, botguardResponse ];
 
   const integrityTokenResponse = await bgConfig.fetch(buildURL('GenerateIT', bgConfig.useYouTubeAPI), {
@@ -50,6 +49,7 @@ export async function generate(args: PoTokenArgs): Promise<PoTokenResult> {
 /**
  * Creates a placeholder PoToken. This can be used while `sps` (StreamProtectionStatus) is 2, but will not work once it changes to 3.
  * @param identifier - Visitor ID or Data Sync ID.
+ * @param clientState - The client state.
  */
 export function generatePlaceholder(identifier: string, clientState?: number): string {
   const encodedIdentifier = new TextEncoder().encode(identifier);

@@ -3,7 +3,7 @@ import type { BotGuardClientOptions, SnapshotArgs, VMFunctions } from '../utils/
 export default class BotGuardClient {
   public vm: Record<string, any>;
   public program: string;
-  public userInteractionElement?: Record<string, any>;
+  public userInteractionElement?: any;
   public vmFunctions: VMFunctions = {};
   public syncSnapshotFunction?: (args: any[]) => Promise<string>;
 
@@ -13,7 +13,12 @@ export default class BotGuardClient {
     this.program = options.program;
   }
 
-  public static async create(options: BotGuardClientOptions) {
+  /**
+   * Factory method to create and load a BotGuardClient instance.
+   * @param options - Configuration options for the BotGuardClient.
+   * @returns A promise that resolves to a loaded BotGuardClient instance.
+   */
+  public static async create(options: BotGuardClientOptions): Promise<BotGuardClient> {
     return await new BotGuardClient(options).load();
   }
 
@@ -43,6 +48,8 @@ export default class BotGuardClient {
   }
 
   /**
+   * Takes a snapshot asynchronously.
+   * @returns The snapshot result.
    * @example
    * ```ts
    * const result = await botguard.snapshot({
@@ -52,7 +59,7 @@ export default class BotGuardClient {
    *     encryptedVideoId: "P-vC09ZJcnM"
    *    }
    * });
-   * 
+   *
    * console.log(result);
    * ```
    */
@@ -70,38 +77,50 @@ export default class BotGuardClient {
     });
   }
 
-  public async invoke(args: SnapshotArgs) {
+  /**
+   * Takes a snapshot synchronously.
+   * @returns The snapshot result.
+   * @throws Error Throws an error if the synchronous snapshot function is not found.
+   */
+  public async snapshotSynchronous(args: SnapshotArgs): Promise<string> {
     if (!this.syncSnapshotFunction)
       throw new Error('[BotGuardClient]: Sync snapshot function not found');
 
-    const result = await this.syncSnapshotFunction([
+    return this.syncSnapshotFunction([
       args.contentBinding,
       args.signedTimestamp,
       args.webPoSignalOutput,
       args.skipPrivacyBuffer
     ]);
-    
-    return result;
   }
 
-  public passEvent(args: unknown) {
+  /**
+   * Passes an event to the VM.
+   * @throws Error Throws an error if the pass event function is not found.
+   */
+  public passEvent(args: unknown): void {
     if (!this.vmFunctions.passEventFunction)
       throw new Error('[BotGuardClient]: Pass event function not found');
-
     this.vmFunctions.passEventFunction(args);
   }
 
-  public checkCamera(args: unknown) {
+  /**
+   * Checks the "camera".
+   * @throws Error Throws an error if the check camera function is not found.
+   */
+  public checkCamera(args: unknown): void {
     if (!this.vmFunctions.checkCameraFunction)
       throw new Error('[BotGuardClient]: Check camera function not found');
-
     this.vmFunctions.checkCameraFunction(args);
   }
 
-  public shutdown() {
+  /**
+   * Shuts down the VM. Taking a snapshot after this will throw an error.
+   * @throws Error Throws an error if the shutdown function is not found.
+   */
+  public shutdown(): void {
     if (!this.vmFunctions.shutdownFunction)
       throw new Error('[BotGuardClient]: Shutdown function not found');
-
     this.vmFunctions.shutdownFunction();
   }
 }
