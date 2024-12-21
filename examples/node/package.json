@@ -16,6 +16,6 @@
   },
   "dependencies": {
     "jsdom": "^24.1.1",
-    "youtubei.js": "^10.5.0"
+    "youtubei.js": "^12.2.0"
   }
 }
