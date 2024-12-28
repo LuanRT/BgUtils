@@ -1,4 +1,4 @@
-import { GOOG_BASE_URL, YT_BASE_URL } from './constants.js';
+import { GOOG_API_KEY, GOOG_BASE_URL, USER_AGENT, YT_BASE_URL } from './constants.js';
 
 const base64urlCharRegex = /[-_.]/g;
 
@@ -21,13 +21,11 @@ export function base64ToU8(base64: string): Uint8Array {
 
   base64Mod = atob(base64Mod);
 
-  const result = new Uint8Array(
+  return new Uint8Array(
     [ ...base64Mod ].map(
       (char) => char.charCodeAt(0)
     )
   );
-
-  return result;
 }
 
 export function u8ToBase64(u8: Uint8Array, base64url = false): string {
@@ -40,6 +38,35 @@ export function u8ToBase64(u8: Uint8Array, base64url = false): string {
   }
 
   return result;
+}
+
+export function isBrowser(): boolean {
+  const isBrowser = typeof window !== 'undefined'
+    && typeof window.document !== 'undefined'
+    && typeof window.document.createElement !== 'undefined'
+    && typeof window.HTMLElement !== 'undefined'
+    && typeof window.navigator !== 'undefined'
+    && typeof window.getComputedStyle === 'function'
+    && typeof window.requestAnimationFrame === 'function'
+    && typeof window.matchMedia === 'function';
+
+  const hasValidWindow = Object.getOwnPropertyDescriptor(globalThis, 'window')?.get?.toString().includes('[native code]') ?? false;
+  
+  return isBrowser && hasValidWindow;
+}
+
+export function getHeaders() {
+  const headers: Record<string, any> = {
+    'content-type': 'application/json+protobuf',
+    'x-goog-api-key': GOOG_API_KEY,
+    'x-user-agent': 'grpc-web-javascript/0.1'
+  };
+  
+  if (!isBrowser()) {
+    headers['user-agent'] = USER_AGENT;
+  }
+  
+  return headers;
 }
 
 export function buildURL(endpointName: string, useYouTubeAPI?: boolean): string {

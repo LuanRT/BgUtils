@@ -1,4 +1,4 @@
-import { base64ToU8, buildURL, GOOG_API_KEY } from '../utils/index.js';
+import { base64ToU8, buildURL, getHeaders } from '../utils/index.js';
 import type { DescrambledChallenge, BgConfig } from '../utils/index.js';
 
 /**
@@ -21,11 +21,7 @@ export async function create(bgConfig: BgConfig, interpreterHash?: string): Prom
 
   const response = await bgConfig.fetch(buildURL('Create', bgConfig.useYouTubeAPI), {
     method: 'POST',
-    headers: {
-      'content-type': 'application/json+protobuf',
-      'x-goog-api-key': GOOG_API_KEY,
-      'x-user-agent': 'grpc-web-javascript/0.1'
-    },
+    headers: getHeaders(),
     body: JSON.stringify(payload)
   });
 
