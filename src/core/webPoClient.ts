@@ -1,6 +1,6 @@
 import BotGuardClient from './botGuardClient.js';
 import WebPoMinter from './webPoMinter.js';
-import { GOOG_API_KEY, base64ToU8, buildURL, u8ToBase64 } from '../utils/index.js';
+import { base64ToU8, buildURL, u8ToBase64, getHeaders } from '../utils/index.js';
 import type { PoTokenArgs, PoTokenResult, WebPoSignalOutput } from '../utils/index.js';
 
 /**
@@ -20,11 +20,7 @@ export async function generate(args: PoTokenArgs): Promise<PoTokenResult> {
 
   const integrityTokenResponse = await bgConfig.fetch(buildURL('GenerateIT', bgConfig.useYouTubeAPI), {
     method: 'POST',
-    headers: {
-      'content-type': 'application/json+protobuf',
-      'x-goog-api-key': GOOG_API_KEY,
-      'x-user-agent': 'grpc-web-javascript/0.1'
-    },
+    headers: getHeaders(),
     body: JSON.stringify(payload)
   });
 
