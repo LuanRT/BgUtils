@@ -8,6 +8,17 @@ const base64urlToBase64Map = {
   '.': '='
 };
 
+export class BGError extends TypeError {
+  public info?: any;
+  
+  constructor(message: string, info?: Record<string, any>) {
+    super(message);
+    this.name = 'BGError';
+    if (info)
+      this.info = info;
+  }
+}
+
 export function base64ToU8(base64: string): Uint8Array {
   let base64Mod;
 

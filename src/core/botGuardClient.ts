@@ -1,4 +1,5 @@
 import type { BotGuardClientOptions, SnapshotArgs, VMFunctions } from '../utils/types.js';
+import { BGError } from '../utils/index.js';
 
 export default class BotGuardClient {
   public vm: Record<string, any>;
@@ -24,10 +25,10 @@ export default class BotGuardClient {
 
   private async load() {
     if (!this.vm)
-      throw new Error('[BotGuardClient]: VM not found in the global object');
+      throw new BGError('[BotGuardClient]: VM not found in the global object');
 
     if (!this.vm.a)
-      throw new Error('[BotGuardClient]: Could not load program');
+      throw new BGError('[BotGuardClient]: Could not load program');
 
     const vmFunctionsCallback = (
       asyncSnapshotFunction: VMFunctions['asyncSnapshotFunction'],
@@ -41,7 +42,7 @@ export default class BotGuardClient {
     try {
       this.syncSnapshotFunction = await this.vm.a(this.program, vmFunctionsCallback, true, this.userInteractionElement, () => {/** no-op */ }, [ [], [] ])[0];
     } catch (error) {
-      throw new Error(`[BotGuardClient]: Failed to load program (${(error as Error).message})`);
+      throw new BGError(`[BotGuardClient]: Failed to load program (${(error as Error).message})`);
     }
 
     return this;
@@ -66,7 +67,7 @@ export default class BotGuardClient {
   public async snapshot(args: SnapshotArgs): Promise<string> {
     return new Promise((resolve, reject) => {
       if (!this.vmFunctions.asyncSnapshotFunction)
-        return reject(new Error('[BotGuardClient]: Async snapshot function not found'));
+        return reject(new BGError('[BotGuardClient]: Async snapshot function not found'));
 
       this.vmFunctions.asyncSnapshotFunction((response) => resolve(response), [
         args.contentBinding,
@@ -84,7 +85,7 @@ export default class BotGuardClient {
    */
   public async snapshotSynchronous(args: SnapshotArgs): Promise<string> {
     if (!this.syncSnapshotFunction)
-      throw new Error('[BotGuardClient]: Sync snapshot function not found');
+      throw new BGError('[BotGuardClient]: Sync snapshot function not found');
 
     return this.syncSnapshotFunction([
       args.contentBinding,
@@ -100,7 +101,7 @@ export default class BotGuardClient {
    */
   public passEvent(args: unknown): void {
     if (!this.vmFunctions.passEventFunction)
-      throw new Error('[BotGuardClient]: Pass event function not found');
+      throw new BGError('[BotGuardClient]: Pass event function not found');
     this.vmFunctions.passEventFunction(args);
   }
 
@@ -110,7 +111,7 @@ export default class BotGuardClient {
    */
   public checkCamera(args: unknown): void {
     if (!this.vmFunctions.checkCameraFunction)
-      throw new Error('[BotGuardClient]: Check camera function not found');
+      throw new BGError('[BotGuardClient]: Check camera function not found');
     this.vmFunctions.checkCameraFunction(args);
   }
 
@@ -120,7 +121,7 @@ export default class BotGuardClient {
    */
   public shutdown(): void {
     if (!this.vmFunctions.shutdownFunction)
-      throw new Error('[BotGuardClient]: Shutdown function not found');
+      throw new BGError('[BotGuardClient]: Shutdown function not found');
     this.vmFunctions.shutdownFunction();
   }
 }

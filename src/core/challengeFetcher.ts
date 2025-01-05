@@ -1,4 +1,4 @@
-import { base64ToU8, buildURL, getHeaders } from '../utils/index.js';
+import { base64ToU8, BGError, buildURL, getHeaders } from '../utils/index.js';
 import type { DescrambledChallenge, BgConfig } from '../utils/index.js';
 
 /**
@@ -12,7 +12,7 @@ export async function create(bgConfig: BgConfig, interpreterHash?: string): Prom
   const requestKey = bgConfig.requestKey;
 
   if (!bgConfig.fetch)
-    throw new Error('[Challenge]: Fetch function not provided');
+    throw new BGError('[Challenge]: Fetch function not provided');
 
   const payload = [ requestKey ];
 
@@ -26,7 +26,7 @@ export async function create(bgConfig: BgConfig, interpreterHash?: string): Prom
   });
 
   if (!response.ok)
-    throw new Error(`[Challenge]: Failed to fetch challenge: ${response.status}`);
+    throw new BGError('[Challenge]: Failed to fetch challenge', { status: response.status });
 
   const rawData = await response.json() as unknown[];
 

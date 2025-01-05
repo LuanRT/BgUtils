@@ -1,6 +1,6 @@
 import BotGuardClient from './botGuardClient.js';
 import WebPoMinter from './webPoMinter.js';
-import { base64ToU8, buildURL, u8ToBase64, getHeaders } from '../utils/index.js';
+import { base64ToU8, buildURL, u8ToBase64, getHeaders, BGError } from '../utils/index.js';
 import type { PoTokenArgs, PoTokenResult, WebPoSignalOutput } from '../utils/index.js';
 
 /**
@@ -51,7 +51,7 @@ export function generatePlaceholder(identifier: string, clientState?: number): s
   const encodedIdentifier = new TextEncoder().encode(identifier);
 
   if (encodedIdentifier.length > 118)
-    throw new Error('DFO:Invalid');
+    throw new BGError('DFO:Invalid', { identifier });
 
   const timestamp = Math.floor(Date.now() / 1000);
   const randomKeys = [ Math.floor(Math.random() * 256), Math.floor(Math.random() * 256) ];
@@ -101,7 +101,7 @@ export function decodePlaceholder(placeholder: string) {
   const totalPacketLength = 2 + payloadLength;
 
   if (packet.length !== totalPacketLength)
-    throw new Error('Invalid packet length.');
+    throw new BGError('Invalid packet length.', { packetLength: packet.length, expectedLength: totalPacketLength });
 
   const payload = packet.subarray(2);
 

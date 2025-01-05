@@ -1,4 +1,4 @@
-import { base64ToU8, u8ToBase64 } from '../utils/helpers.js';
+import { base64ToU8, BGError, u8ToBase64 } from '../utils/helpers.js';
 import type { IntegrityTokenData, MintCallback, WebPoSignalOutput } from '../utils/types.js';
 
 export default class WebPoMinter {
@@ -12,12 +12,15 @@ export default class WebPoMinter {
     const getMinter = webPoSignalOutput[0];
 
     if (!getMinter)
-      throw new Error('PMD:Undefined');
-
-    const mintCallback = await getMinter(base64ToU8(integrityTokenResponse.integrityToken ?? ''));
+      throw new BGError('PMD:Undefined');
+    
+    if (!integrityTokenResponse.integrityToken)
+      throw new BGError('Failed to create WebPoMinter: No integrity token provided', integrityTokenResponse);
+    
+    const mintCallback = await getMinter(base64ToU8(integrityTokenResponse.integrityToken));
 
     if (!(mintCallback instanceof Function))
-      throw new Error('APF:Failed');
+      throw new BGError('APF:Failed');
 
     return new WebPoMinter(mintCallback);
   }
@@ -31,10 +34,10 @@ export default class WebPoMinter {
     const result = await this.mintCallback(new TextEncoder().encode(identifier));
 
     if (!result)
-      throw new Error('YNJ:Undefined');
+      throw new BGError('YNJ:Undefined');
 
     if (!(result instanceof Uint8Array))
-      throw new Error('ODM:Invalid');
+      throw new BGError('ODM:Invalid');
 
     return result;
   }
