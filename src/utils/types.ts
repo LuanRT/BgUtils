@@ -42,7 +42,7 @@ export type SnapshotArgs = {
   contentBinding?: ContentBiding;
   signedTimestamp?: unknown;
   webPoSignalOutput?: WebPoSignalOutput;
-  skipPrivacyBuffer?: unknown;
+  skipPrivacyBuffer?: boolean;
 };
 
 export type IntegrityTokenData = {
