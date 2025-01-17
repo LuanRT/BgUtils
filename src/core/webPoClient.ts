@@ -43,11 +43,11 @@ export async function generate(args: PoTokenArgs): Promise<PoTokenResult> {
 }
 
 /**
- * Creates a placeholder PoToken. This can be used while `sps` (StreamProtectionStatus) is 2, but will not work once it changes to 3.
+ * Creates a cold start token. This can be used while `sps` (StreamProtectionStatus) is 2, but will not work once it changes to 3.
  * @param identifier - Visitor ID or Data Sync ID.
  * @param clientState - The client state.
  */
-export function generatePlaceholder(identifier: string, clientState?: number): string {
+export function generateColdStartToken(identifier: string, clientState?: number): string {
   const encodedIdentifier = new TextEncoder().encode(identifier);
 
   if (encodedIdentifier.length > 118)
@@ -90,12 +90,18 @@ export function generatePlaceholder(identifier: string, clientState?: number): s
 }
 
 /**
- * Decodes a placeholder potoken string into its components.
- * @param placeholder - The placeholder potoken to decode.
+ * @deprecated Use `generateColdStartToken` instead.
+ */
+export function generatePlaceholder(identifier: string, clientState?: number): string {
+  return generateColdStartToken(identifier, clientState);
+}
+
+/**
+ * Decodes a cold start webpo token.
  * @throws Error if the packet length is invalid.
  */
-export function decodePlaceholder(placeholder: string) {
-  const packet = base64ToU8(placeholder);
+export function decodeColdStartToken(token: string) {
+  const packet = base64ToU8(token);
 
   const payloadLength = packet[1];
   const totalPacketLength = 2 + payloadLength;
