@@ -82,7 +82,7 @@ const extraRequestArgs = {
       vis: 0,
       splay: false,
       lactMilliseconds: '-1',
-      signatureTimestamp: innertube.session.player?.sts,
+      signatureTimestamp: innertube.session.player?.sts
     }
   },
   serviceIntegrityDimensions: {
