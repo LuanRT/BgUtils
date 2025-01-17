@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.1.2](https://github.com/LuanRT/BgUtils/compare/v3.1.1...v3.1.2) (2025-01-05)
+
+
+### Bug Fixes
+
+* **WebPoMinter:** Throw an error if no integrity token is provided ([c07aea9](https://github.com/LuanRT/BgUtils/commit/c07aea96311bc582e4657411c9b54c6a5ee41b22))
+
 ## [3.1.1](https://github.com/LuanRT/BgUtils/compare/v3.1.0...v3.1.1) (2024-12-28)
 
 

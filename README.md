@@ -1,8 +1,8 @@
-# What Is This?
+# Introduction
 This library facilitates the creation of PoTokens by directly interacting with BotGuard's API.
 
 
-- [What Is This?](#what-is-this)
+- [Introduction](#introduction)
   - [A Few Notes](#a-few-notes)
   - [Usage](#usage)
   - [Research](#research)
