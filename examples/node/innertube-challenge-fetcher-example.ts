@@ -20,9 +20,12 @@ Object.assign(globalThis, {
   window: dom.window,
   document: dom.window.document,
   location: dom.window.location,
-  navigator: dom.window.navigator,
   origin: dom.window.origin
 });
+
+if (!Reflect.has(globalThis, 'navigator')) {
+  Object.defineProperty(globalThis, 'navigator', { value: dom.window.navigator });
+}
 
 const challengeResponse = await innertube.getAttestationChallenge('ENGAGEMENT_TYPE_UNBOUND');
 
