@@ -10,7 +10,7 @@ const innertube = await Innertube.create({ user_agent: userAgent, enable_session
 const visitorData = innertube.session.context.client.visitorData || '';
 
 // #region BotGuard Initialization
-const dom = new JSDOM('<!DOCTYPE html><html lang="en"><head title=""></head><body></body></html>', {
+const dom = new JSDOM('<!DOCTYPE html><html lang="en"><head><title></title></head><body></body></html>', {
   url: 'https://www.youtube.com/',
   referrer: 'https://www.youtube.com/',
   userAgent
@@ -69,7 +69,7 @@ const integrityTokenBasedMinter = await BG.WebPoMinter.create({ integrityToken: 
 // #endregion
 
 // #region YouTube.js Usage Example
-const videoId = 'FeqhtDOhX6Y';
+const videoId = 'EBFDLgqn8pw';
 
 const contentPoToken = await integrityTokenBasedMinter.mintAsWebsafeString(videoId);
 const sessionPoToken = await integrityTokenBasedMinter.mintAsWebsafeString(visitorData);
