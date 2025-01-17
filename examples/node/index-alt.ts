@@ -1,14 +1,12 @@
 /**
- * This is an alternative way to use the library. It is lower-level, but it 
+ * This is an alternative way to use the library. It is lower-level, but it
  * allows you to have more control over the process.
  */
 
 import { BG, buildURL, GOOG_API_KEY } from '../../dist/index.js';
 import type { WebPoSignalOutput } from '../../dist/index.js';
-import { JSDOM } from 'jsdom';
-// Bun:
-// import { Innertube, UniversalCache } from 'youtubei.js/web';
 import { Innertube, UniversalCache } from 'youtubei.js';
+import { JSDOM } from 'jsdom';
 
 // Create a barebones Innertube instance so we can get a visitor data string from YouTube.
 let innertube = await Innertube.create({ retrieve_player: false });
@@ -92,5 +90,5 @@ const audioStreamingURL = info.chooseFormat({
 }).decipher(innertube.session.player);
 
 console.info('Visitor data:', visitorData, '\n');
-console.info('PoToken:', poToken, '\n');
+console.info('Session WebPO Token:', poToken, '\n');
 console.info('Streaming URL:', audioStreamingURL);
