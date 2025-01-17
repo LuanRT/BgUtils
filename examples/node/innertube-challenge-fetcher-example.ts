@@ -26,7 +26,7 @@ Object.assign(globalThis, {
 
 const challengeResponse = await innertube.getAttestationChallenge('ENGAGEMENT_TYPE_UNBOUND');
 
-if (!challengeResponse || !challengeResponse.bg_challenge)
+if (!challengeResponse.bg_challenge)
   throw new Error('Could not get challenge');
 
 const interpreterUrl = challengeResponse.bg_challenge.interpreter_url.private_do_not_access_or_else_trusted_resource_url_wrapped_value;
