@@ -32,7 +32,7 @@ export default class BotGuardClient {
 
     const vmFunctionsCallback = (
       asyncSnapshotFunction: VMFunctions['asyncSnapshotFunction'],
-      shutdownFunction: VMFunctions['asyncSnapshotFunction'],
+      shutdownFunction: VMFunctions['shutdownFunction'],
       passEventFunction: VMFunctions['passEventFunction'],
       checkCameraFunction: VMFunctions['checkCameraFunction']
     ) => {
