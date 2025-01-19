@@ -71,7 +71,7 @@ export type DescrambledChallenge = {
   */
   interpreterHash: string;
   /**
-   * The program.
+   * The challenge program.
    */
   program: string;
   /**
@@ -88,8 +88,20 @@ export type FetchFunction = typeof fetch;
 
 export type BgConfig = {
   fetch: FetchFunction;
+  /**
+   * Global object in which the VM is loaded.
+   */
   globalObj: Record<string, any>;
+  /**
+   * Content binding.
+   */
   identifier: string;
+  /**
+   * A lookup key which maps to a program descriptor in the server config.
+   */
   requestKey: string;
+  /**
+   * Whether to use the YouTube API.
+   */
   useYouTubeAPI?: boolean;
 };
