@@ -2,7 +2,7 @@ import { base64ToU8, BGError, u8ToBase64 } from '../utils/helpers.js';
 import type { IntegrityTokenData, MintCallback, WebPoSignalOutput } from '../utils/types.js';
 
 export default class WebPoMinter {
-  private mintCallback: MintCallback;
+  private readonly mintCallback: MintCallback;
 
   constructor(mintCallback: MintCallback) {
     this.mintCallback = mintCallback;
