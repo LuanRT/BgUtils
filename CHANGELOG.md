@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.1.3](https://github.com/LuanRT/BgUtils/compare/v3.1.2...v3.1.3) (2025-01-26)
+
+
+### Miscellaneous Chores
+
+* release 3.1.3 ([18a8583](https://github.com/LuanRT/BgUtils/commit/18a8583cb16b72aeb641ae329b2222a1689c8930))
+
 ## [3.1.2](https://github.com/LuanRT/BgUtils/compare/v3.1.1...v3.1.2) (2025-01-05)
 
 
