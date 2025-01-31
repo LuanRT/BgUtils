@@ -288,6 +288,12 @@ The player also checks a value called "sps" (`StreamProtectionStatus`), included
 - **Status 2**: A PO Token is required, but the client can request up to 1-2 MB of data before playback is interrupted.
 - **Status 3**: At this stage, the player can no longer request data without a PO Token.
 
+#### Token Types
+
+- **Cold start token**: A placeholder token used to start playback before the session-bound token is minted. It is encrypted using a simple XOR cipher, and uses the Data Sync ID or Visitor ID as the content binding.
+- **Session bound token**: Generated when the user interacts with the player. If logged in, it is bound to the account's Data Sync ID, otherwise, a Visitor ID is used.
+- **Content bound token**: Generated for every `/player` request (`serviceIntegrityDimensions.poToken`). It is bound to the Video ID and should not be cached.
+
 ## License
 
 Distributed under the [MIT](https://choosealicense.com/licenses/mit/) License.
