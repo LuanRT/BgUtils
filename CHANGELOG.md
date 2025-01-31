@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.1.4](https://github.com/LuanRT/BgUtils/compare/v3.1.3...v3.1.4) (2025-01-31)
+
+
+### Bug Fixes
+
+* **web-example:** Locally generated Visitor IDs are no longer accepted ([3fc2116](https://github.com/LuanRT/BgUtils/commit/3fc21168106f334bf441c4fc39446fd3981785ce))
+
 ## [3.1.3](https://github.com/LuanRT/BgUtils/compare/v3.1.2...v3.1.3) (2025-01-26)
 
 
