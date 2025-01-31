@@ -1,47 +1,10 @@
-import { BG } from '../../../..';
-import { Innertube, ProtoUtils, UniversalCache, Utils } from 'youtubei.js/web';
+import type { WebPoSignalOutput } from '../../../..';
+import { BG, buildURL, GOOG_API_KEY } from '../../../..';
 import GoogleVideo, { Protos } from 'googlevideo';
+import { Innertube, UniversalCache, YT, YTNodes } from 'youtubei.js/web';
 
 import shaka from 'shaka-player/dist/shaka-player.ui';
-
 import 'shaka-player/dist/controls.css';
-
-function fetchFn(input: RequestInfo | URL, init?: RequestInit) {
-  const url = typeof input === 'string'
-    ? new URL(input)
-    : input instanceof URL
-      ? input
-      : new URL(input.url);
-
-  // Transform the url for use with our proxy.
-  url.searchParams.set('__host', url.host);
-  url.host = 'localhost:8080';
-  url.protocol = 'http';
-
-  const headers = init?.headers
-    ? new Headers(init.headers)
-    : input instanceof Request
-      ? input.headers
-      : new Headers();
-
-  // Now serialize the headers.
-  url.searchParams.set('__headers', JSON.stringify([ ...headers ]));
-
-  // Copy over the request.
-  const request = new Request(
-    url,
-    input instanceof Request ? input : undefined
-  );
-
-  headers.delete('user-agent');
-
-  return fetch(request, init ? {
-    ...init,
-    headers
-  } : {
-    headers
-  });
-}
 
 const title = document.getElementById('title') as HTMLHeadingElement;
 const description = document.getElementById('description') as HTMLDivElement;
@@ -49,52 +12,129 @@ const metadata = document.getElementById('metadata') as HTMLDivElement;
 const loader = document.getElementById('loader') as HTMLDivElement;
 const form = document.querySelector('form') as HTMLFormElement;
 
-async function getPo(identifier: string): Promise<string | undefined> {
+type WebPoMinter = {
+  integrityTokenBasedMinter?: BG.WebPoMinter;
+  botguardClient?: BG.BotGuardClient;
+}
+
+async function getWebPoMinter(): Promise<WebPoMinter> {
   const requestKey = 'O43z0dpjhgX20SCx4KAo';
 
-  const bgConfig = {
-    fetch: (input: string | URL | globalThis.Request, init?: RequestInit) => fetch(input, init),
-    globalObj: window,
-    requestKey,
-    identifier
-  };
+  const challengeResponse = await fetch(buildURL('Create', true), {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json+protobuf',
+      'x-goog-api-key': GOOG_API_KEY,
+      'x-user-agent': 'grpc-web-javascript/0.1'
+    },
+    body: JSON.stringify([ requestKey ])
+  });
 
-  const bgChallenge = await BG.Challenge.create(bgConfig);
+  const challengeResponseData = await challengeResponse.json();
+
+  const bgChallenge = BG.Challenge.parseChallengeData(challengeResponseData);
 
   if (!bgChallenge)
     throw new Error('Could not get challenge');
 
   const interpreterJavascript = bgChallenge.interpreterJavascript.privateDoNotAccessOrElseSafeScriptWrappedValue;
 
-  if (interpreterJavascript) {
-    new Function(interpreterJavascript)();
-  } else throw new Error('Could not load VM');
+  if (!document.getElementById(bgChallenge.interpreterHash)) {
+    const script = document.createElement('script');
+    script.type = 'text/javascript';
+    script.id = bgChallenge.interpreterHash;
+    script.textContent = interpreterJavascript;
+    document.head.appendChild(script);
+  }
 
-  const poTokenResult = await BG.PoToken.generate({
-    program: bgChallenge.program,
+  const botguardClient = await BG.BotGuardClient.create({
+    globalObj: globalThis,
     globalName: bgChallenge.globalName,
-    bgConfig
+    program: bgChallenge.program
   });
 
-  return poTokenResult.poToken;
+  if (bgChallenge) {
+    const webPoSignalOutput: WebPoSignalOutput = [];
+    const botguardResponse = await botguardClient.snapshot({ webPoSignalOutput });
+
+    const integrityTokenResponse = await fetch(buildURL('GenerateIT', true), {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json+protobuf',
+        'x-goog-api-key': GOOG_API_KEY,
+        'x-user-agent': 'grpc-web-javacript/0.1'
+      },
+      body: JSON.stringify([ requestKey, botguardResponse ])
+    });
+
+    const integrityTokenResponseData = await integrityTokenResponse.json();
+    const integrityToken = integrityTokenResponseData[0] as string | undefined;
+
+    if (!integrityToken) {
+      console.error('Could not get integrity token. Interpreter Hash:', bgChallenge.interpreterHash);
+      return {};
+    }
+
+    const integrityTokenBasedMinter = await BG.WebPoMinter.create({ integrityToken }, webPoSignalOutput);
+
+    return {
+      integrityTokenBasedMinter,
+      botguardClient
+    };
+  }
+
+  return {};
 }
 
 async function main() {
-  let poToken: string | undefined;
-  const visitorData = ProtoUtils.encodeVisitorData(Utils.generateRandomString(11), Math.floor(Date.now() / 1000));
-
-  // Immediately mint a cold start token so we can start playback without delays.
-  const coldStartToken = BG.PoToken.generatePlaceholder(visitorData);
-  getPo(visitorData).then((webPo) => poToken = webPo);
+  let sessionWebPo: string | undefined;
+  const { integrityTokenBasedMinter } = await getWebPoMinter();
 
   const yt = await Innertube.create({
-    po_token: poToken,
-    visitor_data: visitorData,
-    fetch: fetchFn,
-    generate_session_locally: true,
+    fetch: (input, init) => {
+      const url = typeof input === 'string'
+        ? new URL(input)
+        : input instanceof URL
+          ? input
+          : new URL(input.url);
+
+      // Transform the url for use with our proxy.
+      url.searchParams.set('__host', url.host);
+      url.host = 'localhost:8080';
+      url.protocol = 'http';
+
+      const headers = init?.headers
+        ? new Headers(init.headers)
+        : input instanceof Request
+          ? input.headers
+          : new Headers();
+
+      // Now serialize the headers.
+      url.searchParams.set('__headers', JSON.stringify([ ...headers ]));
+
+      // Copy over the request.
+      const request = new Request(
+        url,
+        input instanceof Request ? input : undefined
+      );
+
+      headers.delete('user-agent');
+
+      return fetch(request, init ? {
+        ...init,
+        headers
+      } : {
+        headers
+      });
+    },
+    generate_session_locally: false,
     cache: new UniversalCache(false)
   });
-
+  
+  if (integrityTokenBasedMinter) {
+    sessionWebPo = await integrityTokenBasedMinter.mintAsWebsafeString(yt.session.context.client.visitorData ?? '');
+  }
+  
   form.animate({ opacity: [ 0, 1 ] }, { duration: 300, easing: 'ease-in-out' });
   form.style.display = 'block';
 
@@ -137,7 +177,35 @@ async function main() {
         videoId = videoIdOrURL;
       }
 
-      const info = await yt.getInfo(videoId);
+      const extraArgs: Record<string, any> = {
+        playbackContext: {
+          contentPlaybackContext: {
+            vis: 0,
+            splay: false,
+            lactMilliseconds: '-1',
+            signatureTimestamp: yt.session.player?.sts
+          }
+        },
+        contentCheckOk: true,
+        racyCheckOk: true
+      };
+
+      // Generate content WebPO token.
+      if (integrityTokenBasedMinter) {
+        extraArgs.serviceIntegrityDimensions = {
+          poToken: await integrityTokenBasedMinter.mintAsWebsafeString(videoId)
+        };
+      }
+      
+      const watchEndpoint = new YTNodes.NavigationEndpoint({ watchEndpoint: { videoId } });
+      const rawPlayerResponse = await watchEndpoint.call(yt.actions, extraArgs);
+      const rawNextResponse = await watchEndpoint.call(yt.actions, { 
+        override_endpoint: '/next',
+        racyCheckOk: true, 
+        contentCheckOk: true 
+      });
+      
+      const info = new YT.VideoInfo([ rawPlayerResponse, rawNextResponse ], yt!.actions, '');
 
       title.textContent = info.basic_info.title || null;
       description.innerHTML = info.secondary_info?.description.toHTML() || '';
@@ -241,7 +309,7 @@ async function main() {
                 url.searchParams.set('range', headers.Range.split('=')[1]);
                 url.searchParams.set('ump', '1');
                 url.searchParams.set('srfvp', '1');
-                url.searchParams.set('pot', (poToken ?? coldStartToken) ?? '');
+                url.searchParams.set('pot', (sessionWebPo ?? BG.PoToken.generateColdStartToken(yt.session.context.client.visitorData ?? '')));
                 request.headers = {};
                 delete headers.Range;
               }
