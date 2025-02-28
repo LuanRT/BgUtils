@@ -30,6 +30,11 @@ export default class BotGuardClient {
     if (!this.vm.a)
       throw new BGError('[BotGuardClient]: Could not load program');
 
+    let vmFunctionsCallbackCalled: () => void;
+    const vmFunctionsCallbackPromise = new Promise<void>((resolve) => {
+      vmFunctionsCallbackCalled = resolve;
+    });
+
     const vmFunctionsCallback = (
       asyncSnapshotFunction: VMFunctions['asyncSnapshotFunction'],
       shutdownFunction: VMFunctions['shutdownFunction'],
@@ -37,6 +42,7 @@ export default class BotGuardClient {
       checkCameraFunction: VMFunctions['checkCameraFunction']
     ) => {
       Object.assign(this.vmFunctions, { asyncSnapshotFunction, shutdownFunction, passEventFunction, checkCameraFunction });
+      vmFunctionsCallbackCalled();
     };
 
     try {
@@ -44,6 +50,8 @@ export default class BotGuardClient {
     } catch (error) {
       throw new BGError(`[BotGuardClient]: Failed to load program (${(error as Error).message})`);
     }
+
+    await vmFunctionsCallbackPromise;
 
     return this;
   }
