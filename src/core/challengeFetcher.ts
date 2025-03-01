@@ -12,7 +12,7 @@ export async function create(bgConfig: BgConfig, interpreterHash?: string): Prom
   const requestKey = bgConfig.requestKey;
 
   if (!bgConfig.fetch)
-    throw new BGError('[Challenge]: Fetch function not provided');
+    throw new BGError('BAD_CONFIG', 'No fetch function provided');
 
   const payload = [ requestKey ];
 
@@ -26,7 +26,7 @@ export async function create(bgConfig: BgConfig, interpreterHash?: string): Prom
   });
 
   if (!response.ok)
-    throw new BGError('[Challenge]: Failed to fetch challenge', { status: response.status });
+    throw new BGError('REQUEST_FAILED', 'Failed to fetch challenge', { status: response.status });
 
   const rawData = await response.json() as unknown[];
 

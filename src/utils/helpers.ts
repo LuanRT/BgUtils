@@ -22,13 +22,14 @@ export class DeferredPromise<T = any> {
 }
 
 export class BGError extends TypeError {
+  public code: string;
   public info?: any;
 
-  constructor(message: string, info?: Record<string, any>) {
+  constructor(code: string, message: string, info?: Record<string, any>) {
     super(message);
     this.name = 'BGError';
-    if (info)
-      this.info = info;
+    this.code = code;
+    if (info) this.info = info;
   }
 }
 
