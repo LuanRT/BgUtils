@@ -72,7 +72,7 @@ const integrityTokenBasedMinter = await BG.WebPoMinter.create({ integrityToken: 
 // #endregion
 
 // #region YouTube.js Usage Example
-const videoId = 'EBFDLgqn8pw';
+const videoId = '7eLARwNIjDY';
 
 const contentPoToken = await integrityTokenBasedMinter.mintAsWebsafeString(videoId);
 const sessionPoToken = await integrityTokenBasedMinter.mintAsWebsafeString(visitorData);
