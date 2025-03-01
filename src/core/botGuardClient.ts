@@ -1,12 +1,12 @@
 import type { BotGuardClientOptions, SnapshotArgs, VMFunctions } from '../utils/types.js';
-import { BGError } from '../utils/index.js';
+import { BGError, DeferredPromise } from '../utils/index.js';
 
 export default class BotGuardClient {
   public vm: Record<string, any>;
   public program: string;
   public userInteractionElement?: any;
-  public vmFunctions: VMFunctions = {};
   public syncSnapshotFunction?: (args: any[]) => Promise<string>;
+  public deferredVmFunctions = new DeferredPromise<VMFunctions>();
 
   constructor(options: BotGuardClientOptions) {
     this.userInteractionElement = options.userInteractionElement;
@@ -30,19 +30,18 @@ export default class BotGuardClient {
     if (!this.vm.a)
       throw new BGError('[BotGuardClient]: Could not load program');
 
-    let vmFunctionsCallbackCalled: () => void;
-    const vmFunctionsCallbackPromise = new Promise<void>((resolve) => {
-      vmFunctionsCallbackCalled = resolve;
-    });
-
     const vmFunctionsCallback = (
       asyncSnapshotFunction: VMFunctions['asyncSnapshotFunction'],
       shutdownFunction: VMFunctions['shutdownFunction'],
       passEventFunction: VMFunctions['passEventFunction'],
       checkCameraFunction: VMFunctions['checkCameraFunction']
     ) => {
-      Object.assign(this.vmFunctions, { asyncSnapshotFunction, shutdownFunction, passEventFunction, checkCameraFunction });
-      vmFunctionsCallbackCalled();
+      this.deferredVmFunctions.resolve({
+        asyncSnapshotFunction,
+        shutdownFunction,
+        passEventFunction,
+        checkCameraFunction
+      });
     };
 
     try {
@@ -50,8 +49,6 @@ export default class BotGuardClient {
     } catch (error) {
       throw new BGError(`[BotGuardClient]: Failed to load program (${(error as Error).message})`);
     }
-
-    await vmFunctionsCallbackPromise;
 
     return this;
   }
@@ -73,11 +70,12 @@ export default class BotGuardClient {
    * ```
    */
   public async snapshot(args: SnapshotArgs): Promise<string> {
-    return new Promise((resolve, reject) => {
-      if (!this.vmFunctions.asyncSnapshotFunction)
+    return new Promise(async (resolve, reject) => {
+      const vmFunctions = await this.deferredVmFunctions.promise;
+      if (!vmFunctions.asyncSnapshotFunction)
         return reject(new BGError('[BotGuardClient]: Async snapshot function not found'));
 
-      this.vmFunctions.asyncSnapshotFunction((response) => resolve(response), [
+      await vmFunctions.asyncSnapshotFunction((response) => resolve(response), [
         args.contentBinding,
         args.signedTimestamp,
         args.webPoSignalOutput,
@@ -107,29 +105,32 @@ export default class BotGuardClient {
    * Passes an event to the VM.
    * @throws Error Throws an error if the pass event function is not found.
    */
-  public passEvent(args: unknown): void {
-    if (!this.vmFunctions.passEventFunction)
+  public async passEvent(args: unknown): Promise<void> {
+    const vmFunctions = await this.deferredVmFunctions.promise;
+    if (!vmFunctions.passEventFunction)
       throw new BGError('[BotGuardClient]: Pass event function not found');
-    this.vmFunctions.passEventFunction(args);
+    vmFunctions.passEventFunction(args);
   }
 
   /**
    * Checks the "camera".
    * @throws Error Throws an error if the check camera function is not found.
    */
-  public checkCamera(args: unknown): void {
-    if (!this.vmFunctions.checkCameraFunction)
+  public async checkCamera(args: unknown): Promise<void> {
+    const vmFunctions = await this.deferredVmFunctions.promise;
+    if (!vmFunctions.checkCameraFunction)
       throw new BGError('[BotGuardClient]: Check camera function not found');
-    this.vmFunctions.checkCameraFunction(args);
+    vmFunctions.checkCameraFunction(args);
   }
 
   /**
    * Shuts down the VM. Taking a snapshot after this will throw an error.
    * @throws Error Throws an error if the shutdown function is not found.
    */
-  public shutdown(): void {
-    if (!this.vmFunctions.shutdownFunction)
+  public async shutdown(): Promise<void> {
+    const vmFunctions = await this.deferredVmFunctions.promise;
+    if (!vmFunctions.shutdownFunction)
       throw new BGError('[BotGuardClient]: Shutdown function not found');
-    this.vmFunctions.shutdownFunction();
+    vmFunctions.shutdownFunction();
   }
 }
