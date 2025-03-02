@@ -7,6 +7,7 @@ export default class BotGuardClient {
   public userInteractionElement?: any;
   public syncSnapshotFunction?: (args: any[]) => Promise<string>;
   public deferredVmFunctions = new DeferredPromise<VMFunctions>();
+  public defaultTimeout = 3000;
 
   constructor(options: BotGuardClientOptions) {
     this.userInteractionElement = options.userInteractionElement;
@@ -25,10 +26,10 @@ export default class BotGuardClient {
 
   private async load() {
     if (!this.vm)
-      throw new BGError('[BotGuardClient]: VM not found in the global object');
+      throw new BGError('VM_INIT', 'VM not found');
 
     if (!this.vm.a)
-      throw new BGError('[BotGuardClient]: Could not load program');
+      throw new BGError('VM_INIT', 'VM init function not found');
 
     const vmFunctionsCallback = (
       asyncSnapshotFunction: VMFunctions['asyncSnapshotFunction'],
@@ -47,7 +48,7 @@ export default class BotGuardClient {
     try {
       this.syncSnapshotFunction = await this.vm.a(this.program, vmFunctionsCallback, true, this.userInteractionElement, () => {/** no-op */ }, [ [], [] ])[0];
     } catch (error) {
-      throw new BGError(`[BotGuardClient]: Failed to load program (${(error as Error).message})`);
+      throw new BGError('VM_ERROR', 'Could not load program', { error });
     }
 
     return this;
@@ -69,19 +70,78 @@ export default class BotGuardClient {
    * console.log(result);
    * ```
    */
-  public async snapshot(args: SnapshotArgs): Promise<string> {
-    return new Promise(async (resolve, reject) => {
-      const vmFunctions = await this.deferredVmFunctions.promise;
-      if (!vmFunctions.asyncSnapshotFunction)
-        return reject(new BGError('[BotGuardClient]: Async snapshot function not found'));
+  public async snapshot(args: SnapshotArgs, timeout = 3000): Promise<string> {
+    return await Promise.race([
+      new Promise(async (resolve, reject) => {
+        const vmFunctions = await this.deferredVmFunctions.promise;
+        if (!vmFunctions.asyncSnapshotFunction)
+          return reject(new BGError('ASYNC_SNAPSHOT', 'Asynchronous snapshot function not found'));
 
-      await vmFunctions.asyncSnapshotFunction((response) => resolve(response), [
-        args.contentBinding,
-        args.signedTimestamp,
-        args.webPoSignalOutput,
-        args.skipPrivacyBuffer
-      ]);
-    });
+        await vmFunctions.asyncSnapshotFunction((response) => resolve(response), [
+          args.contentBinding,
+          args.signedTimestamp,
+          args.webPoSignalOutput,
+          args.skipPrivacyBuffer
+        ]);
+      }),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new BGError('TIMEOUT', 'VM operation timed out')), timeout)
+      )
+    ]) as Promise<string>;
+  }
+
+  /**
+   * Passes an event to the VM.
+   * @throws Error Throws an error if the pass event function is not found.
+   */
+  public async passEvent(args: unknown, timeout = this.defaultTimeout): Promise<void> {
+    return await Promise.race([
+      (async () => {
+        const vmFunctions = await this.deferredVmFunctions.promise;
+        if (!vmFunctions.passEventFunction)
+          throw new BGError('PASS_EVENT', 'Pass event function not found');
+        vmFunctions.passEventFunction(args);
+      })(),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new BGError('TIMEOUT', 'VM operation timed out')), timeout)
+      )
+    ]) as Promise<void>;
+  }
+
+  /**
+   * Checks the "camera".
+   * @throws Error Throws an error if the check camera function is not found.
+   */
+  public async checkCamera(args: unknown, timeout = this.defaultTimeout): Promise<void> {
+    return await Promise.race([
+      (async () => {
+        const vmFunctions = await this.deferredVmFunctions.promise;
+        if (!vmFunctions.checkCameraFunction)
+          throw new BGError('CHECK_CAMERA', 'Check camera function not found');
+        vmFunctions.checkCameraFunction(args);
+      })(),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new BGError('TIMEOUT', 'VM operation timed out')), timeout)
+      )
+    ]) as Promise<void>;
+  }
+
+  /**
+   * Shuts down the VM. Taking a snapshot after this will throw an error.
+   * @throws Error Throws an error if the shutdown function is not found.
+   */
+  public async shutdown(timeout = this.defaultTimeout): Promise<void> {
+    return await Promise.race([
+      (async () => {
+        const vmFunctions = await this.deferredVmFunctions.promise;
+        if (!vmFunctions.shutdownFunction)
+          throw new BGError('SHUTDOWN', 'Shutdown function not found');
+        vmFunctions.shutdownFunction();
+      })(),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new BGError('TIMEOUT', 'VM operation timed out')), timeout)
+      )
+    ]) as Promise<void>;
   }
 
   /**
@@ -91,7 +151,7 @@ export default class BotGuardClient {
    */
   public async snapshotSynchronous(args: SnapshotArgs): Promise<string> {
     if (!this.syncSnapshotFunction)
-      throw new BGError('[BotGuardClient]: Sync snapshot function not found');
+      throw new BGError('SYNC_SNAPSHOT', 'Synchronous snapshot function not found');
 
     return this.syncSnapshotFunction([
       args.contentBinding,
@@ -99,38 +159,5 @@ export default class BotGuardClient {
       args.webPoSignalOutput,
       args.skipPrivacyBuffer
     ]);
-  }
-
-  /**
-   * Passes an event to the VM.
-   * @throws Error Throws an error if the pass event function is not found.
-   */
-  public async passEvent(args: unknown): Promise<void> {
-    const vmFunctions = await this.deferredVmFunctions.promise;
-    if (!vmFunctions.passEventFunction)
-      throw new BGError('[BotGuardClient]: Pass event function not found');
-    vmFunctions.passEventFunction(args);
-  }
-
-  /**
-   * Checks the "camera".
-   * @throws Error Throws an error if the check camera function is not found.
-   */
-  public async checkCamera(args: unknown): Promise<void> {
-    const vmFunctions = await this.deferredVmFunctions.promise;
-    if (!vmFunctions.checkCameraFunction)
-      throw new BGError('[BotGuardClient]: Check camera function not found');
-    vmFunctions.checkCameraFunction(args);
-  }
-
-  /**
-   * Shuts down the VM. Taking a snapshot after this will throw an error.
-   * @throws Error Throws an error if the shutdown function is not found.
-   */
-  public async shutdown(): Promise<void> {
-    const vmFunctions = await this.deferredVmFunctions.promise;
-    if (!vmFunctions.shutdownFunction)
-      throw new BGError('[BotGuardClient]: Shutdown function not found');
-    vmFunctions.shutdownFunction();
   }
 }

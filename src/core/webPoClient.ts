@@ -15,7 +15,7 @@ export async function generate(args: PoTokenArgs): Promise<PoTokenResult> {
 
   const webPoSignalOutput: WebPoSignalOutput = [];
   const botguardResponse = await botguard.snapshot({ webPoSignalOutput });
- 
+
   const payload = [ bgConfig.requestKey, botguardResponse ];
 
   const integrityTokenResponse = await bgConfig.fetch(buildURL('GenerateIT', bgConfig.useYouTubeAPI), {
@@ -51,7 +51,7 @@ export function generateColdStartToken(identifier: string, clientState?: number)
   const encodedIdentifier = new TextEncoder().encode(identifier);
 
   if (encodedIdentifier.length > 118)
-    throw new BGError('DFO:Invalid', { identifier });
+    throw new BGError('BAD_INPUT', 'Content binding is too long.', { identifierLength: encodedIdentifier.length });
 
   const timestamp = Math.floor(Date.now() / 1000);
   const randomKeys = [ Math.floor(Math.random() * 256), Math.floor(Math.random() * 256) ];
@@ -107,7 +107,7 @@ export function decodeColdStartToken(token: string) {
   const totalPacketLength = 2 + payloadLength;
 
   if (packet.length !== totalPacketLength)
-    throw new BGError('Invalid packet length.', { packetLength: packet.length, expectedLength: totalPacketLength });
+    throw new BGError('BAD_INPUT', 'Invalid packet length.', { packetLength: packet.length, expectedLength: totalPacketLength });
 
   const payload = packet.subarray(2);
 

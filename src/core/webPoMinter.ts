@@ -12,15 +12,15 @@ export default class WebPoMinter {
     const getMinter = webPoSignalOutput[0];
 
     if (!getMinter)
-      throw new BGError('PMD:Undefined');
-    
+      throw new BGError('VM_ERROR', 'PMD:Undefined');
+
     if (!integrityTokenResponse.integrityToken)
-      throw new BGError('Failed to create WebPoMinter: No integrity token provided', integrityTokenResponse);
-    
+      throw new BGError('INTEGRITY_ERROR', 'No integrity token provided', { integrityTokenResponse });
+
     const mintCallback = await getMinter(base64ToU8(integrityTokenResponse.integrityToken));
 
     if (!(mintCallback instanceof Function))
-      throw new BGError('APF:Failed');
+      throw new BGError('VM_ERROR', 'APF:Failed');
 
     return new WebPoMinter(mintCallback);
   }
@@ -34,10 +34,10 @@ export default class WebPoMinter {
     const result = await this.mintCallback(new TextEncoder().encode(identifier));
 
     if (!result)
-      throw new BGError('YNJ:Undefined');
+      throw new BGError('VM_ERROR', 'YNJ:Undefined');
 
     if (!(result instanceof Uint8Array))
-      throw new BGError('ODM:Invalid');
+      throw new BGError('VM_ERROR', 'ODM:Invalid');
 
     return result;
   }
