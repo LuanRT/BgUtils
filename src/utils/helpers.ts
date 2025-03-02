@@ -8,9 +8,22 @@ const base64urlToBase64Map = {
   '.': '='
 };
 
+export class DeferredPromise<T = any> {
+  public promise: Promise<T>;
+  public resolve!: (value: T | PromiseLike<T>) => void;
+  public reject!: (reason?: any) => void;
+  
+  constructor() {
+    this.promise = new Promise((resolve, reject) => {
+      this.resolve = resolve;
+      this.reject = reject;
+    });
+  }
+}
+
 export class BGError extends TypeError {
   public info?: any;
-  
+
   constructor(message: string, info?: Record<string, any>) {
     super(message);
     this.name = 'BGError';
@@ -62,7 +75,7 @@ export function isBrowser(): boolean {
     && typeof window.matchMedia === 'function';
 
   const hasValidWindow = Object.getOwnPropertyDescriptor(globalThis, 'window')?.get?.toString().includes('[native code]') ?? false;
-  
+
   return isBrowser && hasValidWindow;
 }
 
@@ -72,11 +85,11 @@ export function getHeaders() {
     'x-goog-api-key': GOOG_API_KEY,
     'x-user-agent': 'grpc-web-javascript/0.1'
   };
-  
+
   if (!isBrowser()) {
     headers['user-agent'] = USER_AGENT;
   }
-  
+
   return headers;
 }
 
