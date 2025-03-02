@@ -1,5 +1,18 @@
 # Changelog
 
+## [3.2.0](https://github.com/LuanRT/BgUtils/compare/v3.1.3...v3.2.0) (2025-03-02)
+
+
+### Features
+
+* **BotGuardClient:** Improve error handling and add timeout support for VM operations ([8d9c722](https://github.com/LuanRT/BgUtils/commit/8d9c722eb6b20a4fefe5acc069dc20bed64ec3b8))
+
+
+### Bug Fixes
+
+* **BotGuardClient:** Wait for vmFunctions to be set during load ([#24](https://github.com/LuanRT/BgUtils/issues/24)) ([33e2c34](https://github.com/LuanRT/BgUtils/commit/33e2c3442a7ed1184a8124ef9fe1db101d8a8a28))
+* **web-example:** Locally generated Visitor IDs are no longer accepted ([3fc2116](https://github.com/LuanRT/BgUtils/commit/3fc21168106f334bf441c4fc39446fd3981785ce))
+
 ## [3.1.3](https://github.com/LuanRT/BgUtils/compare/v3.1.2...v3.1.3) (2025-01-26)
 
 
