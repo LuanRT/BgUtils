@@ -128,7 +128,7 @@ console.info(vm);
 
 ### Retrieving Integrity Token
 
-This is an important step. The integrity token is retrieved from a WAA server, and that server relies on the BotGuard response to verify the integrity of the runtime environment. To solve this "challenge", you need to invoke BotGuard and load the bytecode program.
+The integrity token is requested from a WAA server, which uses a BotGuard response token to evaluate runtime integrity. Before you can get that response token, you need to load the VM with a bytecode program:
 
 ```js
 // Assuming you have the VM and its program available in some way...
@@ -197,7 +197,7 @@ const webPoSignalOutput = [];
 const botguardResponse = await snapshot({ webPoSignalOutput });
 ```
 
-At this point, a successful run will give you a (quite long) token and an array containing one or more functions.
+At this point, a successful run will give you a token and an array containing one or more functions.
 
 Now we can create a proper payload for the integrity token request. It should be an array of two items: the request key and the BotGuard response.
 
