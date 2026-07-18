@@ -128,7 +128,7 @@ console.info(vm);
 
 ### Retrieving Integrity Token
 
-First, you need to load BotGuard, and then give it the bytecode program:
+This is an important step. The integrity token is retrieved from a WAA server, and that server relies on the BotGuard response to verify the integrity of the runtime environment. To solve this "challenge", you need to invoke BotGuard and load the bytecode program.
 
 ```js
 // Assuming you have the VM and its program available in some way...
