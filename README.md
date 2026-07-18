@@ -284,7 +284,7 @@ On web, YouTube mints a new PO token for each video request, using the video ID 
 The player also checks a value called "sps" (`StreamProtectionStatus`), included in every UMP response, to determine if the stream needs a PO Token.
 
 - **Status "1"**: The stream is already using a valid PO token, the account has Premium access, or the stream does not require PO tokens.
-- **Status "2"**: A PO token is required, but the client can still request up to 1-2 MB of data before playback is interrupted using a cold start token. The client should request a "real" PO token as soon as possible.
+- **Status "2"**: A PO token is required, but the client can still request up to 1-2 MB of data using a cold start token before playback is interrupted. The client should request a "real" PO token as soon as possible.
 - **Status "3"**: The client cannot continue fetching media data without a valid PO token.
 
 #### Token Types
