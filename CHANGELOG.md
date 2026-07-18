@@ -1,5 +1,16 @@
 # Changelog
 
+## [4.0.0](https://github.com/LuanRT/BgUtils/compare/v3.2.0...v4.0.0) (2026-07-18)
+
+
+### ⚠ BREAKING CHANGES
+
+* Clean up and simplify lib ([#33](https://github.com/LuanRT/BgUtils/issues/33))
+
+### Code Refactoring
+
+* Clean up and simplify lib ([#33](https://github.com/LuanRT/BgUtils/issues/33)) ([d559ccc](https://github.com/LuanRT/BgUtils/commit/d559cccee594219e02e09eb040b3daf4173f76c7))
+
 ## [3.2.0](https://github.com/LuanRT/BgUtils/compare/v3.1.3...v3.2.0) (2025-03-02)
 
 
