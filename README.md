@@ -243,7 +243,7 @@ async function getPoIntegrityToken(requestKey: string, botguardResponse: string)
 const integrityTokenResponse = await getPoIntegrityToken('requestKeyHere', botguardResponse);
 ```
 
-Store the integrity token response and the array obtained earlier, they're needed to mint PO tokens.
+Store the integrity token response and the array obtained earlier. They're needed to mint PO tokens.
 
 ### Minting WebPO Tokens
 
