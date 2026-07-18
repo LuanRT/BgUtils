@@ -75,3 +75,6 @@ deno/
 
 # MacOS
 .DS_Store
+
+# JetBrains IDEs
+.idea/
