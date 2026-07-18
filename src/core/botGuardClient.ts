@@ -81,35 +81,35 @@ export class BotGuardClient extends EventEmitterLike {
      */
 
     /**
-     * `/client_streamz/bg/el` (botguard/event_log)
+     * "/client_streamz/bg/el" (botguard/event_log)
      */
     const logEvent = (event: string, elapsedTime: number) => {
       this.emit('record-bg-event', { event, elapsedTime });
     };
 
     /**
-     * `/client_streamz/bg/cec` (botguard/client_error_count)
+     * "/client_streamz/bg/cec" (botguard/client_error_count)
      */
     const incrementClientErrorCount = (errorCode: number) => {
       this.emit('increment-client-error-count', { errorCode });
     };
 
     /**
-     * `/client_streamz/bg/od/p` (botguard/output_data/payload_size maybe?)
+     * "/client_streamz/bg/od/p" (botguard/output_data/payload_size maybe?)
      */
     const recordPayloadSize = (payloadSize: number) => {
       this.emit('record-payload-size', { payloadSize });
     };
 
     /**
-     * `/client_streamz/bg/od/n`
+     * "/client_streamz/bg/od/n"
      */
     const recordLatency = (latency: number, et: number) => {
       this.emit('record-latency', { latency, et });
     };
 
     /**
-     * `/client_streamz/bg/ec (botguard/event_count)`
+     * "/client_streamz/bg/ec" (botguard/event_count)
      */
     const incrementEventCount = (event: string) => {
       this.emit('increment-bg-event-count', { event });
