@@ -279,7 +279,7 @@ The result will be a sequence of bytes, about 110–128 bytes in length. Base64 
 
 ### When to Use a PO Token
 
-On web, YouTube mints a new PO token for each video request, using the video ID as the content binding. It also mints a cold start token so playback can begin before BotGuard initialization and token minting are fully ready. Also, YouTube reuses the same minter for as long as the page is open.
+On web, YouTube mints a new PO token for each video request, using the video ID as the content binding. It also mints a cold start token so playback can begin before BotGuard initialization and token minting are fully ready. YouTube reuses the same minter for as long as the page is open.
 
 The player also checks a value called "sps" (`StreamProtectionStatus`), included in every UMP response, to determine if the stream needs a PO Token.
 
