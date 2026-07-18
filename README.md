@@ -1,5 +1,5 @@
 # Introduction
-This library provides tools for generating PO Tokens and executing attestation challenges, reverse-engineering how YouTube’s web player interacts with BotGuard and the Web Anti-Abuse API.
+This library provides tools for generating PO tokens and running attestation challenges, based on reverse-engineering research into how YouTube's web player interacts with BotGuard and Google's Web Anti-Abuse API.
 
 - [Introduction](#introduction)
   - [A Few Notes](#a-few-notes)
@@ -9,13 +9,15 @@ This library provides tools for generating PO Tokens and executing attestation c
     - [Retrieving Integrity Token](#retrieving-integrity-token)
     - [Minting WebPO Tokens](#minting-webpo-tokens)
     - [When to Use a PO Token](#when-to-use-a-po-token)
+      - [Token Types](#token-types)
+  - [Sources](#sources)
   - [License](#license)
 
 ## A Few Notes
 
-1. BotGuard is a security mechanism used by Google to protect its services from abuse and verify that requests originate from legitimate clients. This library provides a reverse-engineered implementation of the process used by YouTube's web player to generate PO Tokens and run attestation challenges. However, **it does not bypass BotGuard**; you still need a compliant environment that meets its checks to use this library.
+1. BotGuard is a security mechanism used by Google to protect its services from abuse and verify that requests come from real clients. This library provides a reverse-engineered implementation of the process used by YouTube's web player to generate PO Tokens and run attestation challenges. However, **it does not bypass BotGuard**; you still need a runtime environment that meets its checks to use this library.
 
-2. This library is intended for educational purposes and is not affiliated with Google or YouTube. I am not responsible for any misuse of this library.
+2. This library is not affiliated with Google or YouTube. I am not responsible for any misuse of this library.
 
 ## Usage
 
@@ -23,55 +25,41 @@ Please refer to the provided examples [here](./examples/).
 
 ## Research
 
-Here’s a brief overview of the process for generating a PO Token, for those curious about the library’s inner workings. This information is based on my own research and may become outdated as Google updates its security mechanisms.
+> NOTE: This is based on personal research and may become outdated as Google updates its services.
 
 ### Initialization Process
 
-The VM's script and respective bytecode program can be fetched in three different ways:
+The interpreter script and its respective bytecode program can be fetched in three different ways:
 
-1. **Directly from the page's source code**:
-    - The (InnerTube) challenge response is usually embedded in the initial page's source code.
+1. **Directly from a YouTube page**:
+    - The (InnerTube) challenge response is usually embedded in the initial page data.
 2. **InnerTube API**:
-    - InnerTube has an endpoint that can be used to retrieve challenge data. It is usually the easiest way to do so, as the response is in a readable format.
+    - InnerTube has an endpoint that can be used to retrieve challenge data. It is the easiest way to do it, as the response is in a readable format.
 3. **Web Anti-Abuse Private API**:
-    - An internal Google API for BotGuard, also used by services like Google Drive. Responses may be obfuscated depending on the `requestKey`.
+    - An internal Google API for BotGuard. It's also used used by services like Google Drive and even Gemini. Responses may be obfuscated depending on the `requestKey`.
 
 WAA challenge fetcher example:
 
 ```ts
-type TrustedResource = {
-  privateDoNotAccessOrElseSafeScriptWrappedValue: string | null;
-  privateDoNotAccessOrElseTrustedResourceUrlWrappedValue: string | null;
-}
-
-type DescrambledChallenge = {
-  /**
-   * The ID of the JSPB message.
-   */
-  messageId?: string;
-  /**
-   * The script associated with the challenge.
-   */
-  interpreterJavascript: TrustedResource;
-  /**
-   * The hash of the script. Useful if you want to fetch the challenge script again at a later time.
-  */
-  interpreterHash: string;
-  /**
-   * The challenge program.
-   */
-  program: string;
-  /**
-   * The name of the VM in the global scope.
-  */
-  globalName: string;
-  /**
-   * The client experiments state blob.
-  */
-  clientExperimentsStateBlob?: string;
+interface IWebutilHtmlTypesSafeScriptProto {
+  privateDoNotAccessOrElseSafeScriptWrappedValue?: string;
 };
 
-async function fetchWaaChallenge(requestKey: string, interpreterHash?: string): Promise<DescrambledChallenge | undefined> {
+interface IWebutilHtmlTypesTrustedResourceUrlProto {
+  privateDoNotAccessOrElseTrustedResourceUrlWrappedValue?: string;
+};
+
+interface IBotguardClientSideBgChallenge {
+  messageId?: string;
+  clientExperimentsStateBlob?: string;
+  globalName?: string;
+  interpreterHash?: string;
+  interpreterJavascript?: IWebutilHtmlTypesSafeScriptProto;
+  interpreterUrl?: IWebutilHtmlTypesTrustedResourceUrlProto;
+  program?: string;
+}
+
+async function fetchWaaChallenge(requestKey: string, interpreterHash?: string): Promise<IBotguardClientSideBgChallenge> {
   const payload = [ requestKey ];
 
   if (interpreterHash)
@@ -115,13 +103,13 @@ const interpreterJavascript = await bgScriptResponse.text();
 // ...
 ```
 
-To make the VM available, you need to execute the script in some way:
+To make the VM available, you need to execute the interpreter script:
 ```js
 if (interpreterJavascript) {
   new Function(interpreterJavascript)();
 } else throw new Error('Could not load VM');
 
-// If you're in a browser-like environment, you can also use the following:
+// If you're in a browser like environment, you can also do it this way:
 if (!document.getElementById(interpreterHash)) {
   const script = document.createElement('script');
   script.type = 'text/javascript';
@@ -140,17 +128,17 @@ console.info(vm);
 
 ### Retrieving Integrity Token
 
-This is an important step, the integrity token is retrieved from an attestation server and relies on the BotGuard response, likely to assess the integrity of the runtime environment. To solve this challenge, you need to invoke BotGuard and load the bytecode program.
+First, you need to load BotGuard, and then give it the bytecode program:
 
 ```js
-// Assuming you have the VM and the program available in some way.
+// Assuming you have the VM and its program available in some way...
 if (!this.vm)
-  throw new Error('[BotGuardClient] VM not found in the global object');
+  throw new Error('EGOU: BotGuard unavailable');
 
 if (!this.vm.a)
-  throw new Error('[BotGuardClient] Cannot load program');
+  throw new Error('ELIU: BotGuard initialization function unavailable');
 
-const vmFunctionsCallback = (
+const vmSetupCallback = (
   asyncSnapshotFunction,
   shutdownFunction,
   passEventFunction,
@@ -160,28 +148,38 @@ const vmFunctionsCallback = (
 };
 
 try {
-  this.syncSnapshotFunction = await this.vm.a(this.program, vmFunctionsCallback, true, undefined, () => { /** no-op */ }, [ [], [] ])[0];
+  this.syncSnapshotFunction = await this.vm.a(
+    this.program,
+    vmSetupCallback,
+    true,
+    undefined /* userInteractionElement */,
+    () => {} /* vmTelemetryCallback (reports to Google Clearcut) */,
+    [[], []] /* experiments */,
+    undefined,
+    false,
+    undefined /* loggerFunctions */
+  )?.[0];
 } catch (error) {
-  throw new Error(`[BotGuardClient] Failed to load program (${(error as Error).message})`);
+  throw new Error('Could not load program');
 }
 ```
 
-Here, BotGuard will return several functions, but we are mainly interested in `asyncSnapshotFunction`.
+Then, BotGuard will return several callback functions, but we are mainly interested in `asyncSnapshotFunction`.
 
 Once `asyncSnapshotFunction` is available, call it with the following arguments:
-1. A callback function that takes a single argument. This function will return the token for the attestation request.
+1. A callback function that takes a single argument. This function will return the token for the WAA (Web Anti-Abuse) API call.
 2. An array with four elements:
     - 1st: `contentBinding` (Optional).
     - 2nd: `signedTimestamp` (Optional).
-    - 3rd: `webPoSignalOutput` (Optional but required for our case, BotGuard will fill this array with a function to get a WebPO minter).
+    - 3rd: `webPoSignalOutput` (Required for our use case. BotGuard will return a function to get a WebPO minter here).
     - 4th: `skipPrivacyBuffer` (Optional).
 
-Here's a simplified example:
+Example:
 ```js
 async function snapshot(args) {
   return new Promise((resolve, reject) => {
     if (!this.vmFunctions.asyncSnapshotFunction)
-      return reject(new Error('[BotGuardClient]: Async snapshot function not found'));
+      return reject(new Error('Async snapshot function not found'));
 
     this.vmFunctions.asyncSnapshotFunction((response) => resolve(response), [
       args.contentBinding,
@@ -199,9 +197,9 @@ const webPoSignalOutput = [];
 const botguardResponse = await snapshot({ webPoSignalOutput });
 ```
 
-If everything was done correctly so far, you should have a token and an array with one or more functions.
+At this point, a successful run will give you a (quite long) token and an array containing one or more functions.
 
-Now we can create the payload for the integrity token request. It should be an array of two items: the request key and the token.
+Now we can create a proper payload for the integrity token request. It should be an array of two items: the request key and the BotGuard response.
 
 Example:
 ```ts
@@ -245,7 +243,7 @@ async function getPoIntegrityToken(requestKey: string, botguardResponse: string)
 const integrityTokenResponse = await getPoIntegrityToken('requestKeyHere', botguardResponse);
 ```
 
-Store the integrity token response and the array we obtained earlier. We'll use them to construct our WebPO Token.
+Store the integrity token response and the array obtained earlier, they're needed to mint PO tokens.
 
 ### Minting WebPO Tokens
 
@@ -262,7 +260,8 @@ const mintCallback = await getMinter(base64ToU8(integrityTokenResponse.integrity
 if (!(mintCallback instanceof Function))
   throw new Error('APF:Failed');
 ```
-If successful, you'll get a function that can be used to mint WebPO tokens. Call it with the value you want to use as content binding, such as a Visitor ID, Data Sync ID (if you're signed in), or a Video ID.
+
+If successful, you'll have a function that can be used to mint WebPO tokens. Call it with the value you want to use as content binding, such as a Visitor ID, Data Sync ID, or a Video ID:
 ```js
 const result = await mintCallback(new TextEncoder().encode(identifier));
 
@@ -280,19 +279,28 @@ The result will be a sequence of bytes, about 110–128 bytes in length. Base64 
 
 ### When to Use a PO Token
 
-On web, YouTube tries to mint a session bound PO Token as soon as the user interacts with the player, a cold start token is also minted to ensure playback starts without delays. Once minted, the PO Token is then reused for the rest of the session. If the user refreshes the page, the cached token is used (if available, otherwise a cold start token is used) until a new one finishes minting, and if that fails for some reason, the player will continue using the cached token as long as its respective integrity token is still valid.
+On web, YouTube mints a new PO token for each video request, using the video ID as the content binding. It also mints a cold start token so playback can begin before BotGuard initialization and token minting are fully ready. Also, YouTube reuses the same minter for as long as the page is open.
 
-The player also checks a value called "sps" (`StreamProtectionStatus`), included in each media segment response (only if using `UMP` or `SABR`; our browser example uses `UMP`) to determine if the stream needs a PO Token.
+The player also checks a value called "sps" (`StreamProtectionStatus`), included in every UMP response, to determine if the stream needs a PO Token.
 
-- **Status 1**: The stream is already using a valid PO Token, the user has a YouTube Premium subscription, or the stream does not require PO Tokens.
-- **Status 2**: A PO Token is required, but the client can request up to 1-2 MB of data before playback is interrupted.
-- **Status 3**: At this stage, the player can no longer request data without a PO Token.
+- **Status "1"**: The stream is already using a valid PO token, the account has Premium access, or the stream does not require PO tokens.
+- **Status "2"**: A PO token is required, but the client can still request up to 1-2 MB of data before playback is interrupted using a cold start token. The client should request a "real" PO token as soon as possible.
+- **Status "3"**: The client cannot continue fetching media data without a valid PO token.
 
 #### Token Types
 
-- **Cold start token**: A placeholder token used to start playback before the session-bound token is minted. It is encrypted using a simple XOR cipher, and uses the Data Sync ID or Visitor ID as the content binding.
-- **Session bound token**: Generated when the user interacts with the player. If logged in, it is bound to the account's Data Sync ID, otherwise, a Visitor ID is used.
-- **Content bound token**: Generated for every `/player` request (`serviceIntegrityDimensions.poToken`). It is bound to the Video ID and should not be cached.
+- **Cold start token**: A placeholder token used to start playback before BotGuard or the minter is ready. It is encrypted using a simple XOR cipher, and should use the same content binding as the real token.
+- **Session bound token**: Generated when the user interacts with the player. If logged in, it is bound to the account's Data Sync ID, otherwise, a Visitor ID is used. NOTE: YouTube's web client does not use this token type anymore. As far as I am aware, only YouTube Music (`WEB_REMIX`) still does.
+- **Content bound token**: Generated for each video request, using the video ID as the content binding.
+
+## Sources
+Most of this research comes from inspecting YouTube's minified JavaScript and tracing behavior manually. I also look at older versions when possible, since they are often easier to read (less obfuscation!). And lastly, I used the now-deleted WAA discovery document as a reference for a few minor things, along with the (also now-deleted) DroidGuard discovery document, which was very similar to WAA when it comes to PO tokens.
+
+1. https://deviceintegritytokens-pa.googleapis.com/$discovery/rest?alt=json&key=AIzaSyBtL0AK6Hzgr69rQyeyhi-V1lmtsPGZd1M (gone)
+2. https://jnn-pa.googleapis.com/$discovery/rest?alt=json&key=AIzaSyDyT5W0Jh49F30Pqqtyfdf7pDLFKLJoAnw (gone)
+3. https://www.youtube.com/s/desktop/4965577f/jsbin/desktop_polymer.vflset/desktop_polymer.js (early 2023; first signs of a proper BotGuard client implementation, but no WebPO client).
+4. https://www.youtube.com/s/desktop/d5c4364e/jsbin/desktop_polymer.vflset/desktop_polymer.js (late 2023; complete BotGuard client implementation, including WebPO support).
+5. Many other YouTube JS bundles that I didn't bookmark...
 
 ## License
 

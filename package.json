@@ -1,38 +1,46 @@
 {
   "name": "bgutils-js",
   "version": "3.2.0",
-  "description": "A JavaScript library for interfacing with Botguard.",
-  "main": "dist/index.js",
+  "description": "A JavaScript library for interfacing with BotGuard.",
   "type": "module",
-  "types": "./dist/index.d.ts",
-  "module": "./dist/index.js",
   "scripts": {
     "lint": "npx eslint ./src/**/*.ts",
     "lint:fix": "npx eslint --fix ./src/**/*.ts",
     "clean": "npx rimraf ./dist ./bundle",
-    "build": "npm run clean && npm run lint && npm run build:esm && npm run bundle:node",
+    "build": "npm run clean && npm run lint && npm run build:esm",
     "build:esm": "npx tsc",
-    "bundle:node": "npx esbuild ./dist/index.js --bundle --outfile=./bundle/index.cjs --platform=node --target=node10 --format=cjs --sourcemap --banner:js=\"/* eslint-disable */\"",
     "prepare": "npm run build"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/LuanRT/BgUtils.git"
-  },
+  "author": "LuanRT <luan.lrt4@gmail.com> (https://github.com/LuanRT)",
+  "funding": [
+    "https://github.com/sponsors/LuanRT"
+  ],
   "keywords": [
     "BotGuard",
     "PoToken",
     "YouTube"
   ],
-  "author": "LuanRT <luan.lrt4@gmail.com> (https://github.com/LuanRT)",
   "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/LuanRT/BgUtils/issues"
+  "exports": {
+    "./botguard": {
+      "types": "./dist/exports/botguard.d.ts",
+      "import": "./dist/exports/botguard.js",
+      "default": "./dist/exports/botguard.js"
+    },
+    "./webpo": {
+      "types": "./dist/exports/webpo.d.ts",
+      "import": "./dist/exports/webpo.js",
+      "default": "./dist/exports/webpo.js"
+    },
+    "./utils": {
+      "types": "./dist/exports/utils.d.ts",
+      "import": "./dist/exports/utils.js",
+      "default": "./dist/exports/utils.js"
+    },
+    "./shared-types": {
+      "types": "./dist/exports/types.d.ts"
+    }
   },
-  "homepage": "https://github.com/LuanRT/BgUtils#readme",
-  "funding": [
-    "https://github.com/sponsors/LuanRT"
-  ],
   "devDependencies": {
     "@eslint/js": "^9.9.0",
     "@stylistic/eslint-plugin": "^2.6.4",
@@ -41,11 +49,12 @@
     "typescript": "^5.5.4",
     "typescript-eslint": "^8.2.0"
   },
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./bundle/index.cjs"
-    }
+  "bugs": {
+    "url": "https://github.com/LuanRT/BgUtils/issues"
+  },
+  "homepage": "https://github.com/LuanRT/BgUtils#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/LuanRT/BgUtils.git"
   }
 }

@@ -1,27 +1,30 @@
-export type PoTokenArgs = {
-  program: string;
-  bgConfig: BgConfig;
-  globalName: string;
-};
-
-export type PoTokenResult = {
-  poToken: string;
-  integrityTokenData: IntegrityTokenData;
-};
-
-export type MintCallback = (identifier: Uint8Array) => Promise<Uint8Array | undefined>;
-export type WebPoSignalOutputFunction = (buffer: Uint8Array) => Promise<(identifier: Uint8Array) => Promise<Uint8Array | undefined>>
+export type MintCallback = (contentBinding: Uint8Array) => Promise<Uint8Array | undefined>;
+export type WebPoSignalOutputFunction = (buffer: Uint8Array) => Promise<(contentBinding: Uint8Array) => Promise<Uint8Array | undefined>>;
 export type WebPoSignalOutput = (WebPoSignalOutputFunction | undefined)[];
+export type FetchFunction = typeof fetch;
+
+export type BgEventData = { event: string; elapsedTime: number; };
+export type ClientErrorData = { errorCode: number; };
+export type PayloadSizeData = { payloadSize: number; };
+export type LatencyData = { latency: number; et: number; };
+export type EventCountData = { event: string; };
 
 export type BotGuardClientOptions = {
-  program: string;
-  globalName: string;
-  globalObj: Record<string, any>;
-  userInteractionElement?: Record<string, any>;
-}
+  program?: string;
+  globalName?: string;
+  globalObject?: any;
+  userInteractionElement?: any;
+};
+
+export type ChallengeFetcherConfig = {
+  requestKey: string;
+  interpreterHash?: string;
+  fetchFunction: FetchFunction;
+  useYouTubeAPI?: boolean;
+};
 
 export type VMFunctions = {
-  asyncSnapshotFunction?: (callback: (str: string) => void, args: any[]) => Promise<string>;
+  asyncSnapshotFunction?: (callback: (str: string) => void, args: any[]) => string;
   shutdownFunction?: (...args: any[]) => void;
   passEventFunction?: (...args: any[]) => void;
   checkCameraFunction?: (...args: any[]) => void;
@@ -37,7 +40,6 @@ export type ContentBiding = {
   [key: string]: any;
 };
 
-// @TODO: Figure out the correct types for the rest of these arguments.
 export type SnapshotArgs = {
   contentBinding?: ContentBiding;
   signedTimestamp?: unknown;
@@ -52,56 +54,20 @@ export type IntegrityTokenData = {
   websafeFallbackToken?: string;
 };
 
-export type InterpreterJavascript = {
-  privateDoNotAccessOrElseSafeScriptWrappedValue: string | null;
-  privateDoNotAccessOrElseTrustedResourceUrlWrappedValue: string | null;
+export interface IWebutilHtmlTypesSafeScriptProto {
+  privateDoNotAccessOrElseSafeScriptWrappedValue?: string;
 }
 
-export type DescrambledChallenge = {
-  /**
-   * The ID of the JSPB message.
-   */
+export interface IWebutilHtmlTypesTrustedResourceUrlProto {
+  privateDoNotAccessOrElseTrustedResourceUrlWrappedValue?: string;
+}
+
+export interface IBotguardClientSideBgChallenge {
   messageId?: string;
-  /**
-   * The script associated with the challenge.
-   */
-  interpreterJavascript: InterpreterJavascript;
-  /**
-   * The hash of the script.
-  */
-  interpreterHash: string;
-  /**
-   * The challenge program.
-   */
-  program: string;
-  /**
-   * The name of the VM in the global scope.
-  */
-  globalName: string;
-  /**
-   * The client experiments state blob.
-  */
   clientExperimentsStateBlob?: string;
-};
-
-export type FetchFunction = typeof fetch;
-
-export type BgConfig = {
-  fetch: FetchFunction;
-  /**
-   * Global object in which the VM is loaded.
-   */
-  globalObj: Record<string, any>;
-  /**
-   * Content binding.
-   */
-  identifier: string;
-  /**
-   * A lookup key which maps to a program descriptor in the server config.
-   */
-  requestKey: string;
-  /**
-   * Whether to use the YouTube API.
-   */
-  useYouTubeAPI?: boolean;
-};
+  globalName?: string;
+  interpreterHash?: string;
+  interpreterJavascript?: IWebutilHtmlTypesSafeScriptProto;
+  interpreterUrl?: IWebutilHtmlTypesTrustedResourceUrlProto;
+  program?: string;
+}

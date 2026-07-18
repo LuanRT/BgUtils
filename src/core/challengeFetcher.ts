@@ -1,32 +1,34 @@
-import { base64ToU8, BGError, buildURL, getHeaders } from '../utils/index.js';
-import type { DescrambledChallenge, BgConfig } from '../utils/index.js';
+import { base64ToU8, BgError, buildURL, getHeaders } from '../utils/helpers.js';
+import type { ChallengeFetcherConfig, IBotguardClientSideBgChallenge } from '../utils/types.js';
 
 /**
- * Creates a challenge.
- * @param bgConfig - The config.
- * @param interpreterHash - The ID of the challenge script. If provided, the server will assume that
- * the client already has the script and will not return it.
- * @returns The challenge data.
+ * Fetches a BotGuard challenge using the provided configuration.
+ * @NOTE
+ * For YouTube specifically, you may need to fetch it using InnerTube instead
+ * depending on the client.
  */
-export async function create(bgConfig: BgConfig, interpreterHash?: string): Promise<DescrambledChallenge | undefined> {
-  const requestKey = bgConfig.requestKey;
+export async function getChallenge(config: ChallengeFetcherConfig): Promise<IBotguardClientSideBgChallenge> {
+  const { requestKey, interpreterHash, fetchFunction, useYouTubeAPI } = config;
 
-  if (!bgConfig.fetch)
-    throw new BGError('BAD_CONFIG', 'No fetch function provided');
+  if (!fetchFunction)
+    throw new BgError('No fetch function provided');
+
+  if (!requestKey)
+    throw new BgError('No request key provided');
 
   const payload = [ requestKey ];
 
   if (interpreterHash)
     payload.push(interpreterHash);
 
-  const response = await bgConfig.fetch(buildURL('Create', bgConfig.useYouTubeAPI), {
+  const response = await fetchFunction(buildURL('Create', useYouTubeAPI), {
     method: 'POST',
     headers: getHeaders(),
     body: JSON.stringify(payload)
   });
 
   if (!response.ok)
-    throw new BGError('REQUEST_FAILED', 'Failed to fetch challenge', { status: response.status });
+    throw new BgError('Failed to fetch challenge', { status: response.status });
 
   const rawData = await response.json() as unknown[];
 
@@ -36,38 +38,47 @@ export async function create(bgConfig: BgConfig, interpreterHash?: string): Prom
 /**
  * Parses the challenge data from the provided response data.
  */
-export function parseChallengeData(rawData: Record<string, any>): DescrambledChallenge | undefined {
+export function parseChallengeData(rawData: Record<string, any>): IBotguardClientSideBgChallenge {
   let challengeData: any[] = [];
 
   if (rawData.length > 1 && typeof rawData[1] === 'string') {
-    const descrambled = descramble(rawData[1]);
+    const descrambled = descrambleChallenge(rawData[1]);
     challengeData = JSON.parse(descrambled || '[]');
   } else if (rawData.length && typeof rawData[0] === 'object') {
     challengeData = rawData[0];
   }
 
   const [ messageId, wrappedScript, wrappedUrl, interpreterHash, program, globalName, , clientExperimentsStateBlob ] = challengeData;
+  const privateDoNotAccessOrElseSafeScriptWrappedValue = Array.isArray(wrappedScript) ? wrappedScript.find((value) => value && typeof value === 'string') : undefined;
+  const privateDoNotAccessOrElseTrustedResourceUrlWrappedValue = Array.isArray(wrappedUrl) ? wrappedUrl.find((value) => value && typeof value === 'string') : undefined;
 
-  const privateDoNotAccessOrElseSafeScriptWrappedValue = Array.isArray(wrappedScript) ? wrappedScript.find((value) => value && typeof value === 'string') : null;
-  const privateDoNotAccessOrElseTrustedResourceUrlWrappedValue = Array.isArray(wrappedUrl) ? wrappedUrl.find((value) => value && typeof value === 'string') : null;
-
-  return {
+  const clientSideBgChallenge: IBotguardClientSideBgChallenge = {
     messageId,
-    interpreterJavascript: {
-      privateDoNotAccessOrElseSafeScriptWrappedValue,
-      privateDoNotAccessOrElseTrustedResourceUrlWrappedValue
-    },
     interpreterHash,
     program,
     globalName,
     clientExperimentsStateBlob
   };
+
+  if (privateDoNotAccessOrElseSafeScriptWrappedValue) {
+    clientSideBgChallenge.interpreterJavascript = {
+      privateDoNotAccessOrElseSafeScriptWrappedValue
+    };
+  }
+  
+  if (privateDoNotAccessOrElseTrustedResourceUrlWrappedValue) {
+    clientSideBgChallenge.interpreterUrl = {
+      privateDoNotAccessOrElseTrustedResourceUrlWrappedValue
+    };
+  }
+  
+  return clientSideBgChallenge;
 }
 
 /**
  * Descrambles the given challenge data.
  */
-export function descramble(scrambledChallenge: string): string | undefined {
+export function descrambleChallenge(scrambledChallenge: string): string | undefined {
   const buffer = base64ToU8(scrambledChallenge);
   if (buffer.length)
     return new TextDecoder().decode(buffer.map((b) => b + 97));
