@@ -263,7 +263,7 @@ if (!(mintCallback instanceof Function))
 
 If successful, you'll have a function that can be used to mint WebPO tokens. Call it with the value you want to use as content binding, such as a Visitor ID, Data Sync ID, or a Video ID:
 ```js
-const result = await mintCallback(new TextEncoder().encode(identifier));
+const result = await mintCallback(new TextEncoder().encode(contentBinding));
 
 if (!result)
   throw new Error('YNJ:Undefined');
