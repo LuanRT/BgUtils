@@ -290,7 +290,7 @@ The player also checks a value called "sps" (`StreamProtectionStatus`), included
 #### Token Types
 
 - **Cold start token**: A placeholder token used to start playback before BotGuard or the minter is ready. It is encrypted using a simple XOR cipher, and should use the same content binding as the real token.
-- **Session bound token**: Generated when the user interacts with the player. If logged in, it is bound to the account's Data Sync ID, otherwise, a Visitor ID is used. NOTE: YouTube's web client does not use this token type anymore. As far as I am aware, only YouTube Music (`WEB_REMIX`) still does.
+- **Session bound token**: Generated when the user interacts with the player. If logged in, it is bound to the account's Data Sync ID, otherwise, a Visitor ID is used. NOTE: YouTube's web client does not use this token type anymore.
 - **Content bound token**: Generated for each video request, using the video ID as the content binding.
 
 ## Sources
