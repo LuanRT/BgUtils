@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.0.1](https://github.com/LuanRT/BgUtils/compare/v4.0.0...v4.0.1) (2026-07-24)
+
+
+### Miscellaneous Chores
+
+* release 4.0.1 ([931a559](https://github.com/LuanRT/BgUtils/commit/931a559a09999a944d8b5de70884d0c7954bb6e7))
+
 ## [4.0.0](https://github.com/LuanRT/BgUtils/compare/v3.2.0...v4.0.0) (2026-07-18)
 
 
