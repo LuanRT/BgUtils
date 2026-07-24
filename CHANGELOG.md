@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.0.2](https://github.com/LuanRT/BgUtils/compare/v4.0.1...v4.0.2) (2026-07-24)
+
+
+### Bug Fixes
+
+* **tsconfig:** Update target version from es2020 to es2022 ([109e341](https://github.com/LuanRT/BgUtils/commit/109e34155728c6f613e37ad388dd0e15d62965ba))
+
 ## [4.0.1](https://github.com/LuanRT/BgUtils/compare/v4.0.0...v4.0.1) (2026-07-24)
 
 

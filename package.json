@@ -1,6 +1,6 @@
 {
   "name": "bgutils-js",
-  "version": "4.0.1",
+  "version": "4.0.2",
   "description": "A JavaScript library for interfacing with BotGuard.",
   "type": "module",
   "scripts": {
