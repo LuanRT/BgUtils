@@ -1,75 +1,88 @@
-// See https://github.com/nodejs/node/issues/40678#issuecomment-1126944677
-class CustomEvent extends Event {
-  #detail;
+type Listener = (...args: any[]) => void;
 
-  constructor(type: string, options?: CustomEventInit<any[]>) {
-    super(type, options);
-    this.#detail = options?.detail ?? null;
-  }
-
-  get detail(): any[] | null {
-    return this.#detail;
-  }
-}
-
-export class EventEmitterLike extends EventTarget {
-  #legacyListeners = new Map<(...args: any[]) => void, { type: string, wrapper: EventListener }>();
-
-  constructor() {
-    super();
-  }
+export class EventEmitterLike {
+  #listeners = new Map<string, Set<Listener>>();
+  #onceWrappers = new Map<Listener, Map<string, Listener>>();
 
   emit(type: string, ...args: any[]) {
-    const event = new CustomEvent(type, { detail: args });
-    this.dispatchEvent(event);
-  }
+    const listeners = this.#listeners.get(type);
+    if (!listeners || listeners.size === 0)
+      return;
 
-  on(type: string, listener: (...args: any[]) => void) {
-    const wrapper: EventListener = (ev) => {
-      if (ev instanceof CustomEvent) {
-        listener(...ev.detail as any[]);
-      } else {
-        listener(ev);
-      }
-    };
-    this.#legacyListeners.set(listener, { type, wrapper });
-    this.addEventListener(type, wrapper);
-  }
-
-  once(type: string, listener: (...args: any[]) => void) {
-    const wrapper: EventListener = (ev) => {
-      if (ev instanceof CustomEvent) {
-        listener(...ev.detail as any[]);
-      } else {
-        listener(ev);
-      }
-      this.off(type, listener);
-    };
-    this.#legacyListeners.set(listener, { type, wrapper });
-    this.addEventListener(type, wrapper);
-  }
-
-  off(type: string, listener: (...args: any[]) => void) {
-    const listenerData = this.#legacyListeners.get(listener);
-    if (listenerData && listenerData.type === type) {
-      this.removeEventListener(type, listenerData.wrapper);
-      this.#legacyListeners.delete(listener);
+    // Snaapshot listeners so removals during emit do not affect current iteration.
+    for (const listener of [ ...listeners ]) {
+      listener(...args);
     }
   }
 
+  on(type: string, listener: Listener) {
+    let listeners = this.#listeners.get(type);
+
+    if (!listeners) {
+      listeners = new Set<Listener>();
+      this.#listeners.set(type, listeners);
+    }
+
+    listeners.add(listener);
+  }
+
+  once(type: string, listener: Listener) {
+    const wrapper: Listener = (...args: any[]) => {
+      this.off(type, listener);
+      listener(...args);
+    };
+
+    let wrappersByType = this.#onceWrappers.get(listener);
+
+    if (!wrappersByType) {
+      wrappersByType = new Map<string, Listener>();
+      this.#onceWrappers.set(listener, wrappersByType);
+    }
+
+    wrappersByType.set(type, wrapper);
+    this.on(type, wrapper);
+  }
+
+  off(type: string, listener: Listener) {
+    const listeners = this.#listeners.get(type);
+    if (!listeners)
+      return;
+
+    let target = listener;
+    const wrappersByType = this.#onceWrappers.get(listener);
+
+    if (wrappersByType) {
+      const onceWrapper = wrappersByType.get(type);
+
+      if (onceWrapper) {
+        target = onceWrapper;
+        wrappersByType.delete(type);
+
+        if (wrappersByType.size === 0)
+          this.#onceWrappers.delete(listener);
+      }
+    }
+
+    listeners.delete(target);
+
+    if (listeners.size === 0)
+      this.#listeners.delete(type);
+  }
+
   removeAllListeners(type?: string) {
-    if (type) {
-      for (const [ listener, listenerData ] of this.#legacyListeners.entries()) {
-        if (listenerData.type === type) {
-          this.removeEventListener(type, listenerData.wrapper);
-          this.#legacyListeners.delete(listener);
-        }
-      }
-    } else {
-      for (const [ listener, listenerData ] of this.#legacyListeners.entries()) {
-        this.removeEventListener(listenerData.type, listenerData.wrapper);
-        this.#legacyListeners.delete(listener);
-      }
+    if (!type) {
+      this.#listeners.clear();
+      this.#onceWrappers.clear();
+      return;
+    }
+
+    this.#listeners.delete(type);
+
+    for (const [ listener, wrappersByType ] of this.#onceWrappers.entries()) {
+      wrappersByType.delete(type);
+
+      if (wrappersByType.size === 0)
+        this.#onceWrappers.delete(listener);
     }
   }
 }
