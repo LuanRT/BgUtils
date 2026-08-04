@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.0.3](https://github.com/LuanRT/BgUtils/compare/v4.0.2...v4.0.3) (2026-08-04)
+
+
+### Bug Fixes
+
+* **examples/innertube:** Extract att challenge and `ytcfg` from the page ([#44](https://github.com/LuanRT/BgUtils/issues/44)) ([3fa0402](https://github.com/LuanRT/BgUtils/commit/3fa040236c40311dce7e7dce708e708c98fb7447))
+
 ## [4.0.2](https://github.com/LuanRT/BgUtils/compare/v4.0.1...v4.0.2) (2026-07-24)
 
 
