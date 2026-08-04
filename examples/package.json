@@ -12,7 +12,7 @@
   "license": "ISC",
   "devDependencies": {
     "@types/jsdom": "^21.1.7",
-    "typescript": "^4.6.4"
+    "typescript": "^5.9.3"
   },
   "dependencies": {
     "bgutils-js": "file:..",

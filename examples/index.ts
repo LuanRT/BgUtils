@@ -1,23 +1,20 @@
 import { BotGuardClient, getChallenge } from 'bgutils-js/botguard';
 import { WebPoSignalOutput } from 'bgutils-js/shared-types';
-import { buildURL, getHeaders } from 'bgutils-js/utils';
+import { buildURL, getHeaders, USER_AGENT } from 'bgutils-js/utils';
 import { WebPoMinter } from 'bgutils-js/webpo';
 import { JSDOM } from 'jsdom';
 
 import Innertube, { Platform, Types, UniversalCache } from 'youtubei.js';
 
-Platform.shim.eval = async (data: Types.BuildScriptResult) => {
-    return new Function(data.output)();;
-};
+Platform.shim.eval = async (data: Types.BuildScriptResult) => new Function(data.output)();
 
-const innertube = await Innertube.create({ cache: new UniversalCache(true) });
-
-//#region BotGuard Client Initialization
+//#region BotGuard Client
 const requestKey = 'O43z0dpjhgX20SCx4KAo';
 
 const dom = new JSDOM('<!DOCTYPE html><html lang="en"><head><title></title></head><body></body></html>', {
     url: 'https://www.youtube.com/',
     referrer: 'https://www.youtube.com/',
+    userAgent: USER_AGENT
 });
 
 Object.assign(globalThis, {
@@ -46,13 +43,13 @@ const botGuardClient = await BotGuardClient.create({
 });
 //#endregion
 
-//#region WebPO Minter Initialization
+//#region WebPO Minter
 const webPoSignalOutput: WebPoSignalOutput = [];
 const botguardResponse = await botGuardClient.snapshot({ webPoSignalOutput });
 
 const payload = [requestKey, botguardResponse];
 
-const integrityTokenResponse = await fetch(buildURL('GenerateIT', false), {
+const integrityTokenResponse = await fetch(buildURL('GenerateIT', true), {
     method: 'POST',
     headers: getHeaders(),
     body: JSON.stringify(payload)
@@ -73,10 +70,10 @@ const webPoMinter = await WebPoMinter.create(integrityTokenData, webPoSignalOutp
 //#endregion
 
 //#region Usage Example
+const innertube = await Innertube.create({ cache: new UniversalCache(true) });
+
 const videoId = 'kX0k0h_7QV8';
-
 const contentPoToken = await webPoMinter.mintAsWebsafeString(videoId);
-
 const videoInfo = await innertube.getBasicInfo(videoId, { client: 'YTMUSIC' });
 
 const format = videoInfo.chooseFormat({
@@ -84,7 +81,9 @@ const format = videoInfo.chooseFormat({
     type: 'audio'
 });
 
-const audioStreamingURL = `${await format.decipher(innertube.session.player)}&pot=${contentPoToken}`;
+const audioStreamingURL = `${await format.decipher(innertube.session.player)}&pot=${encodeURIComponent(contentPoToken)}`;
 
+console.log('Content Binding:', videoId);
+console.log('WebPO Token:', contentPoToken);
 console.log('Streaming URL:', audioStreamingURL);
 //#endregion
