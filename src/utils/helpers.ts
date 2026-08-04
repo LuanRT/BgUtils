@@ -63,6 +63,35 @@ export function u8ToBase64(u8: Uint8Array, base64url = false): string {
   return result;
 }
 
+export function parseLooseJSON(looseJson: string): Record<string, any> {
+  const sanitizedString = looseJson.replace(/\\x([0-9A-Fa-f]{2})/g, (_match, hex) => {
+    return String.fromCharCode(parseInt(hex, 16));
+  });
+  
+  let jsonStr = sanitizedString.replace(/,\s*([\]}])/g, '$1');
+
+  jsonStr = jsonStr.replace(/'((?:[^'\\]|\\[\s\S])*)'/g, (_match, innerStr) => {
+    const unescaped = innerStr.replace(/\\'/g, '\'');
+    return JSON.stringify(unescaped);
+  });
+
+  // just in case
+  jsonStr = jsonStr.replace(/([{,]\s*)([a-zA-Z0-9_$]+)\s*:/g, '$1"$2":');
+
+  const parsedData = JSON.parse(jsonStr);
+
+  for (const key in parsedData) {
+    const val = parsedData[key];
+    if (typeof val === 'string' && (val.trim().startsWith('{') || val.trim().startsWith('['))) {
+      try {
+        parsedData[key] = JSON.parse(val);
+      } catch { /** no-op */ }
+    }
+  }
+
+  return parsedData;
+}
+
 export function isBrowser(): boolean {
   const isBrowser = typeof window !== 'undefined'
     && typeof window.document !== 'undefined'
