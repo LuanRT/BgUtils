@@ -1,5 +1,3 @@
-Run one of the examples:
-
 Install dependencies:
 ```bash
 npm install
