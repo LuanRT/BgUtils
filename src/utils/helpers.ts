@@ -64,11 +64,7 @@ export function u8ToBase64(u8: Uint8Array, base64url = false): string {
 }
 
 export function parseLooseJSON(looseJson: string): Record<string, any> {
-  const sanitizedString = looseJson.replace(/\\x([0-9A-Fa-f]{2})/g, (_match, hex) => {
-    return String.fromCharCode(parseInt(hex, 16));
-  });
-  
-  let jsonStr = sanitizedString.replace(/,\s*([\]}])/g, '$1');
+  let jsonStr = looseJson.replace(/,\s*([\]}])/g, '$1');
 
   jsonStr = jsonStr.replace(/'((?:[^'\\]|\\[\s\S])*)'/g, (_match, innerStr) => {
     const unescaped = innerStr.replace(/\\'/g, '\'');
@@ -80,16 +76,45 @@ export function parseLooseJSON(looseJson: string): Record<string, any> {
 
   const parsedData = JSON.parse(jsonStr);
 
-  for (const key in parsedData) {
-    const val = parsedData[key];
-    if (typeof val === 'string' && (val.trim().startsWith('{') || val.trim().startsWith('['))) {
-      try {
-        parsedData[key] = JSON.parse(val);
-      } catch { /** no-op */ }
-    }
-  }
+  /**
+   * \x41 -> A basically.
+   */
+  const decodeHexEscapes = (value: string): string => {
+    return value.replace(/\\x([0-9A-Fa-f]{2})/g, (_match, hex) => {
+      return String.fromCharCode(parseInt(hex, 16));
+    });
+  };
 
-  return parsedData;
+  const normalizeValue = (value: any): any => {
+    if (typeof value === 'string') {
+      const decodedValue = decodeHexEscapes(value);
+      const trimmed = decodedValue.trim();
+
+      if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+        try {
+          return normalizeValue(JSON.parse(decodedValue));
+        } catch {
+          return decodedValue;
+        }
+      }
+
+      return decodedValue;
+    }
+
+    if (Array.isArray(value)) {
+      return value.map(normalizeValue);
+    }
+
+    if (value && typeof value === 'object') {
+      for (const key in value) {
+        value[key] = normalizeValue(value[key]);
+      }
+    }
+
+    return value;
+  };
+
+  return normalizeValue(parsedData);
 }
 
 export function isBrowser(): boolean {
